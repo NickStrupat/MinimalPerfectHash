@@ -35,8 +35,6 @@ namespace Test
 		        if (used[hash])
 		        {
 					Assert.True(false, $"FAILED - Collision detected at {test}");
-			        Console.WriteLine("FAILED - Collision detected at {0}", test);
-			        return;
 		        }
 				used[hash] = true;
 	        }
