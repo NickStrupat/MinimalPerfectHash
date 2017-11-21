@@ -20,22 +20,22 @@ namespace MPHTest.MPH
 {
     internal unsafe class BitArray
     {
-        readonly Byte[] _table;
+        readonly Byte[] table;
 
         public BitArray(Int32 size)
         {
-            _table = new Byte[size];
+            table = new Byte[size];
         }
 
         public Byte this[Int32 i]
         {
-            get => _table[i];
-	        set => _table[i] = value;
+            get => table[i];
+	        set => table[i] = value;
         }
 
         public Boolean GetBit(UInt64 i) 
         {
-            fixed (Byte* ptrTable = &_table[0])
+            fixed (Byte* ptrTable = &table[0])
             {
                 var i32OccupTable = (UInt32*) ptrTable;
 	            return (i32OccupTable[i >> 5] & (1u << ((Int32)i & 0x0000001f)))!=0;
@@ -44,7 +44,7 @@ namespace MPHTest.MPH
 
         public void SetBit(UInt32 i)
         {
-            fixed (Byte* ptrTable = &_table[0])
+            fixed (Byte* ptrTable = &table[0])
             {
                 var i32OccupTable = (UInt32*) ptrTable;
                 i32OccupTable[i >> 5] |= 1u << ((Int32)i & 0x0000001f);
@@ -53,7 +53,7 @@ namespace MPHTest.MPH
 
         public void UnSetBit(UInt32 i)
         {
-            fixed (Byte* ptrTable = &_table[0])
+            fixed (Byte* ptrTable = &table[0])
             {
                 var i32OccupTable = (UInt32*) ptrTable;
                 i32OccupTable[i >> 5] ^= 1u << ((Int32)i & 0x0000001f);
@@ -62,7 +62,7 @@ namespace MPHTest.MPH
 
         public void Zero()
         {
-            Array.Clear(_table, 0, _table.Length);
+            Array.Clear(table, 0, table.Length);
         }
     }
 }

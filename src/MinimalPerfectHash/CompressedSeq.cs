@@ -21,12 +21,12 @@ namespace MPHTest.MPH
     [Serializable]
     internal class CompressedSeq
     {
-        UInt32[] _lengthRems;
-        UInt32 _n;
-        UInt32 _remR;
-        Select _sel;
-        UInt32[] _storeTable;
-        UInt32 _totalLength;
+        UInt32[] lengthRems;
+        UInt32 n;
+        UInt32 remR;
+        Select sel;
+        UInt32[] storeTable;
+        UInt32 totalLength;
 
 
         static UInt32 ILog2(UInt32 x)
@@ -47,10 +47,10 @@ namespace MPHTest.MPH
             // lengths: represents lengths of encoded values	
             var lengths = new UInt32[n];
 
-            _n = n;
-            _totalLength = 0;
+            this.n = n;
+            totalLength = 0;
 
-            for (i = 0; i < _n; i++)
+            for (i = 0; i < this.n; i++)
             {
                 if (valsTable[i] == 0)
                 {
@@ -59,72 +59,72 @@ namespace MPHTest.MPH
                 else
                 {
                     lengths[i] = ILog2(valsTable[i] + 1);
-                    _totalLength += lengths[i];
+                    totalLength += lengths[i];
                 }
             }
 
-            _storeTable = new UInt32[(_totalLength + 31) >> 5];
-            _totalLength = 0;
+            storeTable = new UInt32[(totalLength + 31) >> 5];
+            totalLength = 0;
 
-            for (i = 0; i < _n; i++)
+            for (i = 0; i < this.n; i++)
             {
                 if (valsTable[i] == 0)
                     continue;
                 var storedValue = valsTable[i] - ((1U << (Int32)lengths[i]) - 1U);
-                BitBool.SetBitsAtPos(_storeTable, _totalLength, storedValue, lengths[i]);
-                _totalLength += lengths[i];
+                BitBool.SetBitsAtPos(storeTable, totalLength, storedValue, lengths[i]);
+                totalLength += lengths[i];
             }
 
-            _remR = ILog2(_totalLength / _n);
+            remR = ILog2(totalLength / this.n);
 
-            if (_remR == 0)
+            if (remR == 0)
             {
-                _remR = 1;
+                remR = 1;
             }
 
-            _lengthRems = new UInt32[((_n * _remR) + 0x1f) >> 5];
+            lengthRems = new UInt32[((this.n * remR) + 0x1f) >> 5];
 
-            var remsMask = (1U << (Int32)_remR) - 1U;
-            _totalLength = 0;
+            var remsMask = (1U << (Int32)remR) - 1U;
+            totalLength = 0;
 
-            for (i = 0; i < _n; i++)
+            for (i = 0; i < this.n; i++)
             {
-                _totalLength += lengths[i];
-                BitBool.SetBitsValue(_lengthRems, i, _totalLength & remsMask, _remR, remsMask);
-                lengths[i] = _totalLength >> (Int32)_remR;
+                totalLength += lengths[i];
+                BitBool.SetBitsValue(lengthRems, i, totalLength & remsMask, remR, remsMask);
+                lengths[i] = totalLength >> (Int32)remR;
             }
 
-            _sel = new Select();
+            sel = new Select();
 
-            _sel.Generate(lengths, _n, (_totalLength >> (Int32)_remR));
+            sel.Generate(lengths, this.n, (totalLength >> (Int32)remR));
         }
 
         public UInt32 Query(UInt32 idx)
         {
             UInt32 selRes;
             UInt32 encIdx;
-            var remsMask = (UInt32)((1 << (Int32)_remR) - 1);
+            var remsMask = (UInt32)((1 << (Int32)remR) - 1);
 
             if (idx == 0)
             {
                 encIdx = 0;
-                selRes = _sel.Query(idx);
+                selRes = sel.Query(idx);
             }
             else
             {
-                selRes = _sel.Query(idx - 1);
-                encIdx = (selRes - (idx - 1)) << (Int32)_remR;
-                encIdx += BitBool.GetBitsValue(_lengthRems, idx - 1, _remR, remsMask);
-                selRes = _sel.NextQuery(selRes);
+                selRes = sel.Query(idx - 1);
+                encIdx = (selRes - (idx - 1)) << (Int32)remR;
+                encIdx += BitBool.GetBitsValue(lengthRems, idx - 1, remR, remsMask);
+                selRes = sel.NextQuery(selRes);
             }
-            var encLength = (selRes - idx) << (Int32)_remR;
-            encLength += BitBool.GetBitsValue(_lengthRems, idx, _remR, remsMask);
+            var encLength = (selRes - idx) << (Int32)remR;
+            encLength += BitBool.GetBitsValue(lengthRems, idx, remR, remsMask);
             encLength -= encIdx;
             if (encLength == 0)
             {
                 return 0;
             }
-            return (BitBool.GetBitsAtPos(_storeTable, encIdx, encLength) + ((UInt32)((1 << (Int32)encLength) - 1)));
+            return (BitBool.GetBitsAtPos(storeTable, encIdx, encLength) + ((UInt32)((1 << (Int32)encLength) - 1)));
         }
     }
 }

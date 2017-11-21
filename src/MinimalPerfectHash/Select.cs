@@ -183,20 +183,20 @@ namespace MPHTest.MPH
             buffer |= 0x80000000;
         }
 
-        UInt32 _n, _m;
-        UInt32[] _bitsVec;
-        UInt32[] _selectTable;
+        UInt32 n, m;
+        UInt32[] bitsVec;
+        UInt32[] selectTable;
 
         public void Generate(UInt32[] keysVec, UInt32 n, UInt32 m)
         {
             UInt32 buffer = 0;
-            _n = n;
-            _m = m;
-            var nbits = _n + _m;
+            this.n = n;
+            this.m = m;
+            var nbits = this.n + this.m;
             var vecSize = (nbits + 0x1f) >> 5;
-            var selTableSize = (_n >> 7) + 1;
-            _bitsVec = new UInt32[vecSize];
-            _selectTable = new UInt32[selTableSize];
+            var selTableSize = (this.n >> 7) + 1;
+            bitsVec = new UInt32[vecSize];
+            selectTable = new UInt32[selTableSize];
             var j = 0;
             var i = j;
             var idx = i;
@@ -208,13 +208,13 @@ namespace MPHTest.MPH
                     idx++;
 
                     if ((idx & 0x1f) == 0)
-                        _bitsVec[(idx >> 5) - 1] = buffer; // (idx >> 5) = idx/32
+                        bitsVec[(idx >> 5) - 1] = buffer; // (idx >> 5) = idx/32
                     j++;
 
-                    if (j == _n) break;
+                    if (j == this.n) break;
                 }
 
-                if (i == _m)
+                if (i == this.m)
                     break;
 
                 while (keysVec[j] > i)
@@ -223,28 +223,28 @@ namespace MPHTest.MPH
                     idx++;
 
                     if ((idx & 0x1f) == 0) // (idx & 0x1f) = idx % 32
-                        _bitsVec[(idx >> 5) - 1] = buffer; // (idx >> 5) = idx/32
+                        bitsVec[(idx >> 5) - 1] = buffer; // (idx >> 5) = idx/32
                     i++;
                 }
             }
             if ((idx & 0x1f) != 0)
             {
                 buffer = buffer >> 0x20 - (idx & 0x1f);
-                _bitsVec[(idx - 1) >> 5] = buffer;
+                bitsVec[(idx - 1) >> 5] = buffer;
             }
             GenerateSelTable();
         }
 
         unsafe void GenerateSelTable()
         {
-            fixed (UInt32* pptrBitsVec = &(_bitsVec[0]))
+            fixed (UInt32* pptrBitsVec = &(bitsVec[0]))
             {
                 var bitsTable = (Byte*)pptrBitsVec;
                 UInt32 selTableIdx = 0;
                 UInt32 oneIdx = selTableIdx;
                 UInt32 vecIdx = oneIdx;
                 UInt32 partSum = vecIdx;
-                while (oneIdx < _n)
+                while (oneIdx < n)
                 {
                     UInt32 oldPartSum;
                     do
@@ -255,7 +255,7 @@ namespace MPHTest.MPH
                     }
                     while (partSum <= oneIdx);
 
-                    _selectTable[selTableIdx] = SelectLookupTable[bitsTable[vecIdx - 1], oneIdx - oldPartSum] + ((vecIdx - 1) << 3);
+                    selectTable[selTableIdx] = SelectLookupTable[bitsTable[vecIdx - 1], oneIdx - oldPartSum] + ((vecIdx - 1) << 3);
                     oneIdx += 0x80;
                     selTableIdx++;
                 }
@@ -265,11 +265,11 @@ namespace MPHTest.MPH
 
         unsafe public UInt32 Query(UInt32 oneIdx)
         {
-            fixed (UInt32* pptrBitsVec = &(_bitsVec[0]))
+            fixed (UInt32* pptrBitsVec = &(bitsVec[0]))
             {
                 UInt32 oldPartSum;
                 var bitsTable = (Byte*)pptrBitsVec;
-                var vecBitIdx = _selectTable[oneIdx >> 7];
+                var vecBitIdx = selectTable[oneIdx >> 7];
                 var vecByteIdx = vecBitIdx >> 3;
                 oneIdx &= 0x7f;
                 oneIdx += RankLookupTable[bitsTable[vecByteIdx] & ((1 << (Int32)(vecBitIdx & 7)) - 1)];
@@ -287,7 +287,7 @@ namespace MPHTest.MPH
 
         unsafe public UInt32 NextQuery(UInt32 vecBitIdx)
         {
-            fixed (UInt32* pptrBitsVec = &(_bitsVec[0]))
+            fixed (UInt32* pptrBitsVec = &(bitsVec[0]))
             {
                 UInt32 oldPartSum;
                 var bitsTable = (Byte*)pptrBitsVec;

@@ -24,8 +24,8 @@ namespace MPHTest.MPH
     [Serializable]
     public class MinPerfectHash
     {
-        CompressedSeq _cs;
-        UInt32 _hashSeed, _n, _nbuckets;
+        CompressedSeq cs;
+        UInt32 hashSeed, n, nbuckets;
 
         /// <summary>
         /// Create a minimum perfect hash function for the provided key set
@@ -62,7 +62,7 @@ namespace MPHTest.MPH
             var cs = new CompressedSeq();
             cs.Generate(dispTable, (UInt32)dispTable.Length);
 
-            var ret = new MinPerfectHash { _hashSeed = hashSeed, _cs = cs, _nbuckets = buckets.NBuckets, _n = buckets.N };
+            var ret = new MinPerfectHash { hashSeed = hashSeed, cs = cs, nbuckets = buckets.NBuckets, n = buckets.N };
 
             return ret;
         }
@@ -70,7 +70,7 @@ namespace MPHTest.MPH
         /// <summary>
         /// Maximun value of the hash function.
         /// </summary>
-        public UInt32 N => _n;
+        public UInt32 N => n;
 
 	    /// <summary>
         /// Compute the hash value associate with the key
@@ -80,15 +80,15 @@ namespace MPHTest.MPH
         public UInt32 Search(Byte[] key)
         {
             var hl = new UInt32[3];
-            JenkinsHash.HashVector(_hashSeed, key, hl);
-            var g = hl[0] % _nbuckets;
-            var f = hl[1] % _n;
-            var h = hl[2] % (_n - 1) + 1;
+            JenkinsHash.HashVector(hashSeed, key, hl);
+            var g = hl[0] % nbuckets;
+            var f = hl[1] % n;
+            var h = hl[2] % (n - 1) + 1;
 
-            var disp = _cs.Query(g);
-            var probe0Num = disp % _n;
-            var probe1Num = disp / _n;
-            var position = (UInt32)((f + ((UInt64)h) * probe0Num + probe1Num) % _n);
+            var disp = cs.Query(g);
+            var probe0Num = disp % n;
+            var probe1Num = disp / n;
+            var position = (UInt32)((f + ((UInt64)h) * probe0Num + probe1Num) % n);
             return position;
         }
     }
