@@ -20,43 +20,43 @@ namespace MPHTest.MPH
 {
     internal unsafe class BitArray
     {
-        readonly byte[] _table;
+        readonly Byte[] _table;
 
-        public BitArray(int size)
+        public BitArray(Int32 size)
         {
-            _table = new byte[size];
+            _table = new Byte[size];
         }
 
-        public byte this[int i]
+        public Byte this[Int32 i]
         {
             get => _table[i];
 	        set => _table[i] = value;
         }
 
-        public bool GetBit(ulong i) 
+        public Boolean GetBit(UInt64 i) 
         {
-            fixed (byte* ptrTable = &_table[0])
+            fixed (Byte* ptrTable = &_table[0])
             {
-                var i32OccupTable = (uint*) ptrTable;
-	            return (i32OccupTable[i >> 5] & (1u << ((int)i & 0x0000001f)))!=0;
+                var i32OccupTable = (UInt32*) ptrTable;
+	            return (i32OccupTable[i >> 5] & (1u << ((Int32)i & 0x0000001f)))!=0;
             }
         }
 
-        public void SetBit(uint i)
+        public void SetBit(UInt32 i)
         {
-            fixed (byte* ptrTable = &_table[0])
+            fixed (Byte* ptrTable = &_table[0])
             {
-                var i32OccupTable = (uint*) ptrTable;
-                i32OccupTable[i >> 5] |= 1u << ((int)i & 0x0000001f);
+                var i32OccupTable = (UInt32*) ptrTable;
+                i32OccupTable[i >> 5] |= 1u << ((Int32)i & 0x0000001f);
             }
         }
 
-        public void UnSetBit(uint i)
+        public void UnSetBit(UInt32 i)
         {
-            fixed (byte* ptrTable = &_table[0])
+            fixed (Byte* ptrTable = &_table[0])
             {
-                var i32OccupTable = (uint*) ptrTable;
-                i32OccupTable[i >> 5] ^= 1u << ((int)i & 0x0000001f);
+                var i32OccupTable = (UInt32*) ptrTable;
+                i32OccupTable[i >> 5] ^= 1u << ((Int32)i & 0x0000001f);
             }
         }
 

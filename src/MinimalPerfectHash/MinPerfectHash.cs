@@ -25,7 +25,7 @@ namespace MPHTest.MPH
     public class MinPerfectHash
     {
         CompressedSeq _cs;
-        uint _hashSeed, _n, _nbuckets;
+        UInt32 _hashSeed, _n, _nbuckets;
 
         /// <summary>
         /// Create a minimum perfect hash function for the provided key set
@@ -33,16 +33,16 @@ namespace MPHTest.MPH
         /// <param name="keySource">Key source</param>
         /// <param name="c">Load factor (.5 &gt; c &gt; .99)</param>
         /// <returns>Created Minimum Perfect Hash function</returns>
-        public static MinPerfectHash Create(IKeySource keySource, double c)
+        public static MinPerfectHash Create(IKeySource keySource, Double c)
         {
             var buckets = new Buckets(keySource, c);
-            var dispTable = new uint[buckets.NBuckets];
-            uint hashSeed;
+            var dispTable = new UInt32[buckets.NBuckets];
+            UInt32 hashSeed;
 
             var iteration = 100;
             for (; ; iteration--)
             {
-                uint maxBucketSize;
+                UInt32 maxBucketSize;
                 if (!buckets.MappingPhase(out hashSeed, out maxBucketSize))
                 {
                     throw new Exception("Mapping failure. Duplicate keys?");
@@ -60,7 +60,7 @@ namespace MPHTest.MPH
             }
 
             var cs = new CompressedSeq();
-            cs.Generate(dispTable, (uint)dispTable.Length);
+            cs.Generate(dispTable, (UInt32)dispTable.Length);
 
             var ret = new MinPerfectHash { _hashSeed = hashSeed, _cs = cs, _nbuckets = buckets.NBuckets, _n = buckets.N };
 
@@ -70,16 +70,16 @@ namespace MPHTest.MPH
         /// <summary>
         /// Maximun value of the hash function.
         /// </summary>
-        public uint N => _n;
+        public UInt32 N => _n;
 
 	    /// <summary>
         /// Compute the hash value associate with the key
         /// </summary>
         /// <param name="key">key from the original key set</param>
         /// <returns>Hash value (0 &gt; hash &gt; N)</returns>
-        public uint Search(byte[] key)
+        public UInt32 Search(Byte[] key)
         {
-            var hl = new uint[3];
+            var hl = new UInt32[3];
             JenkinsHash.HashVector(_hashSeed, key, hl);
             var g = hl[0] % _nbuckets;
             var f = hl[1] % _n;
@@ -88,7 +88,7 @@ namespace MPHTest.MPH
             var disp = _cs.Query(g);
             var probe0Num = disp % _n;
             var probe1Num = disp / _n;
-            var position = (uint)((f + ((ulong)h) * probe0Num + probe1Num) % _n);
+            var position = (UInt32)((f + ((UInt64)h) * probe0Num + probe1Num) % _n);
             return position;
         }
     }

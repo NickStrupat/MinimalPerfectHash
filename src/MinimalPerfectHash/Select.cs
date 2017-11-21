@@ -22,7 +22,7 @@ namespace MPHTest.MPH
     internal class Select
     {
         #region <Tables>
-        static readonly byte[] RankLookupTable = new byte[]{
+        static readonly Byte[] RankLookupTable = new Byte[]{
                                                                0 , 1 , 1 , 2 , 1 , 2 , 2 , 3 , 1 , 2 , 2 , 3 , 2 , 3 , 3 , 4
                                                                ,  1 , 2 , 2 , 3 , 2 , 3 , 3 , 4 , 2 , 3 , 3 , 4 , 3 , 4 , 4 , 5
                                                                ,  1 , 2 , 2 , 3 , 2 , 3 , 3 , 4 , 2 , 3 , 3 , 4 , 3 , 4 , 4 , 5
@@ -41,7 +41,7 @@ namespace MPHTest.MPH
                                                                ,  4 , 5 , 5 , 6 , 5 , 6 , 6 , 7 , 5 , 6 , 6 , 7 , 6 , 7 , 7 , 8 
                                                            };
 
-        static readonly byte[,] SelectLookupTable = new byte[256, 8] {
+        static readonly Byte[,] SelectLookupTable = new Byte[256, 8] {
                                                                          { 255 , 255 , 255 , 255 , 255 , 255 , 255 , 255 } , { 0 , 255 , 255 , 255 , 255 , 255 , 255 , 255 } ,
                                                                          { 1 , 255 , 255 , 255 , 255 , 255 , 255 , 255 } , { 0 , 1 , 255 , 255 , 255 , 255 , 255 , 255 } ,
                                                                          { 2 , 255 , 255 , 255 , 255 , 255 , 255 , 255 } , { 0 , 2 , 255 , 255 , 255 , 255 , 255 , 255 } ,
@@ -172,31 +172,31 @@ namespace MPHTest.MPH
                                                                          { 1 , 2 , 3 , 4 , 5 , 6 , 7 , 255 } , { 0 , 1 , 2 , 3 , 4 , 5 , 6 , 7 } };
         #endregion
 
-        static void Insert0(ref uint buffer)
+        static void Insert0(ref UInt32 buffer)
         {
             buffer = buffer >> 1;
         }
 
-        static void Insert1(ref uint buffer)
+        static void Insert1(ref UInt32 buffer)
         {
             buffer = buffer >> 1;
             buffer |= 0x80000000;
         }
 
-        uint _n, _m;
-        uint[] _bitsVec;
-        uint[] _selectTable;
+        UInt32 _n, _m;
+        UInt32[] _bitsVec;
+        UInt32[] _selectTable;
 
-        public void Generate(uint[] keysVec, uint n, uint m)
+        public void Generate(UInt32[] keysVec, UInt32 n, UInt32 m)
         {
-            uint buffer = 0;
+            UInt32 buffer = 0;
             _n = n;
             _m = m;
             var nbits = _n + _m;
             var vecSize = (nbits + 0x1f) >> 5;
             var selTableSize = (_n >> 7) + 1;
-            _bitsVec = new uint[vecSize];
-            _selectTable = new uint[selTableSize];
+            _bitsVec = new UInt32[vecSize];
+            _selectTable = new UInt32[selTableSize];
             var j = 0;
             var i = j;
             var idx = i;
@@ -237,16 +237,16 @@ namespace MPHTest.MPH
 
         unsafe void GenerateSelTable()
         {
-            fixed (uint* pptrBitsVec = &(_bitsVec[0]))
+            fixed (UInt32* pptrBitsVec = &(_bitsVec[0]))
             {
-                var bitsTable = (byte*)pptrBitsVec;
-                uint selTableIdx = 0;
-                uint oneIdx = selTableIdx;
-                uint vecIdx = oneIdx;
-                uint partSum = vecIdx;
+                var bitsTable = (Byte*)pptrBitsVec;
+                UInt32 selTableIdx = 0;
+                UInt32 oneIdx = selTableIdx;
+                UInt32 vecIdx = oneIdx;
+                UInt32 partSum = vecIdx;
                 while (oneIdx < _n)
                 {
-                    uint oldPartSum;
+                    UInt32 oldPartSum;
                     do
                     {
                         oldPartSum = partSum;
@@ -263,17 +263,17 @@ namespace MPHTest.MPH
 
         }
 
-        unsafe public uint Query(uint oneIdx)
+        unsafe public UInt32 Query(UInt32 oneIdx)
         {
-            fixed (uint* pptrBitsVec = &(_bitsVec[0]))
+            fixed (UInt32* pptrBitsVec = &(_bitsVec[0]))
             {
-                uint oldPartSum;
-                var bitsTable = (byte*)pptrBitsVec;
+                UInt32 oldPartSum;
+                var bitsTable = (Byte*)pptrBitsVec;
                 var vecBitIdx = _selectTable[oneIdx >> 7];
                 var vecByteIdx = vecBitIdx >> 3;
                 oneIdx &= 0x7f;
-                oneIdx += RankLookupTable[bitsTable[vecByteIdx] & ((1 << (int)(vecBitIdx & 7)) - 1)];
-                uint partSum = 0;
+                oneIdx += RankLookupTable[bitsTable[vecByteIdx] & ((1 << (Int32)(vecBitIdx & 7)) - 1)];
+                UInt32 partSum = 0;
                 do
                 {
                     oldPartSum = partSum;
@@ -285,16 +285,16 @@ namespace MPHTest.MPH
             }
         }
 
-        unsafe public uint NextQuery(uint vecBitIdx)
+        unsafe public UInt32 NextQuery(UInt32 vecBitIdx)
         {
-            fixed (uint* pptrBitsVec = &(_bitsVec[0]))
+            fixed (UInt32* pptrBitsVec = &(_bitsVec[0]))
             {
-                uint oldPartSum;
-                var bitsTable = (byte*)pptrBitsVec;
+                UInt32 oldPartSum;
+                var bitsTable = (Byte*)pptrBitsVec;
                 var vecByteIdx = vecBitIdx >> 3;
                 var oneIdx =
-                    (uint)(RankLookupTable[bitsTable[vecByteIdx] & ((1 << (int)(vecBitIdx & 7)) - 1)] + 1);
-                uint partSum = 0;
+                    (UInt32)(RankLookupTable[bitsTable[vecByteIdx] & ((1 << (Int32)(vecBitIdx & 7)) - 1)] + 1);
+                UInt32 partSum = 0;
                 do
                 {
                     oldPartSum = partSum;

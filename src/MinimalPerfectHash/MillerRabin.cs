@@ -15,6 +15,8 @@
  * < along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * ........................................................................ */
 
+using System;
+
 namespace MPHTest.MPH
 {
     /// <summary>
@@ -22,10 +24,10 @@ namespace MPHTest.MPH
     /// </summary>
     internal static class MillerRabin
     {
-        private static ulong IntPow(ulong a, ulong d, ulong n)
+        private static UInt64 IntPow(UInt64 a, UInt64 d, UInt64 n)
         {
-            ulong aPow = a;
-            ulong res = 1L;
+            UInt64 aPow = a;
+            UInt64 res = 1L;
             while (d > 0L)
             {
                 if ((d & 1L) == 1L)
@@ -38,14 +40,14 @@ namespace MPHTest.MPH
             return res;
         }
 
-        private static bool CheckWitness(ulong aExpD, ulong n, ulong s)
+        private static Boolean CheckWitness(UInt64 aExpD, UInt64 n, UInt64 s)
         {
-            ulong aExp = aExpD;
+            UInt64 aExp = aExpD;
             if ((aExp == 1L) || (aExp == (n - 1L)))
             {
                 return true;
             }
-            for (ulong i = 1L; i < s; i += (ulong)1L)
+            for (UInt64 i = 1L; i < s; i += (UInt64)1L)
             {
                 aExp = (aExp * aExp) % n;
                 if (aExp == (n - 1L))
@@ -61,14 +63,14 @@ namespace MPHTest.MPH
         /// </summary>
         /// <param name="n">Number to check</param>
         /// <returns>true if n is prime</returns>
-        public static bool CheckPrimality(ulong n)
+        public static Boolean CheckPrimality(UInt64 n)
         {
             if ((n % 2L) == 0L) return false;
             if ((n % 3L) == 0L) return false;
             if ((n % 5L) == 0L) return false;
             if ((n % 7L) == 0L) return false;
 
-            ulong s = 0L;
+            UInt64 s = 0L;
             var d = n - 1L;
             do
             {
@@ -76,7 +78,7 @@ namespace MPHTest.MPH
                 d /= 2L;
             }
             while ((d % 2L) == 0L);
-            ulong a = 2L;
+            UInt64 a = 2L;
             if (!CheckWitness(IntPow(a, d, n), n, s)) return false;
             a = 7L;
             if (!CheckWitness(IntPow(a, d, n), n, s)) return false;
