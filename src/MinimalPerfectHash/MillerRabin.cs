@@ -65,23 +65,31 @@ namespace MPHTest.MPH
         /// <returns>true if n is prime</returns>
         public static Boolean CheckPrimality(UInt64 n)
         {
-            if ((n % 2L) == 0L) return false;
-            if ((n % 3L) == 0L) return false;
-            if ((n % 5L) == 0L) return false;
-            if ((n % 7L) == 0L) return false;
+            if ((n % 2L) == 0L)
+				return false;
+            if ((n % 3L) == 0L)
+				return false;
+            if ((n % 5L) == 0L)
+				return false;
+            if ((n % 7L) == 0L)
+				return false;
 
             UInt64 s = 0L;
             var d = n - 1L;
+
             do
             {
                 s += 1L;
                 d /= 2L;
             }
             while ((d % 2L) == 0L);
+
             UInt64 a = 2L;
-            if (!CheckWitness(IntPow(a, d, n), n, s)) return false;
+            if (!CheckWitness(IntPow(a, d, n), n, s))
+				return false;
             a = 7L;
-            if (!CheckWitness(IntPow(a, d, n), n, s)) return false;
+            if (!CheckWitness(IntPow(a, d, n), n, s))
+				return false;
             a = 0x3dL;
             return CheckWitness(IntPow(a, d, n), n, s);
         }

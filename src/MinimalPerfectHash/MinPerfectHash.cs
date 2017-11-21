@@ -51,7 +51,8 @@ namespace MPHTest.MPH
                 var sortedLists = buckets.OrderingPhase(maxBucketSize);
                 var searchingSuccess = buckets.SearchingPhase(maxBucketSize, sortedLists, dispTable);
 
-                if (searchingSuccess) break;
+                if (searchingSuccess)
+					break;
 
                 if (iteration <= 0)
                 {

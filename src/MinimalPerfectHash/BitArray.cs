@@ -35,29 +35,20 @@ namespace MPHTest.MPH
 
         public Boolean GetBit(UInt32 i) 
         {
-            fixed (Byte* ptrTable = &table[0])
-            {
-                var i32OccupTable = (UInt32*) ptrTable;
-	            return (i32OccupTable[i >> 5] & (1u << ((Int32)i & 0x0000001f)))!=0;
-            }
+	        fixed (Byte* pTable = table)
+		        return (((UInt32*) pTable)[i >> 5] & (1u << ((Int32) i & 0x0000001f))) != 0;
         }
 
         public void SetBit(UInt32 i)
         {
-            fixed (Byte* ptrTable = &table[0])
-            {
-                var i32OccupTable = (UInt32*) ptrTable;
-                i32OccupTable[i >> 5] |= 1u << ((Int32)i & 0x0000001f);
-            }
+	        fixed (Byte* pTable = table)
+		        ((UInt32*) pTable)[i >> 5] |= 1u << ((Int32) i & 0x0000001f);
         }
 
         public void UnSetBit(UInt32 i)
         {
-            fixed (Byte* ptrTable = &table[0])
-            {
-                var i32OccupTable = (UInt32*) ptrTable;
-                i32OccupTable[i >> 5] ^= 1u << ((Int32)i & 0x0000001f);
-            }
+	        fixed (Byte* pTable = table)
+		        ((UInt32*) pTable)[i >> 5] ^= 1u << ((Int32) i & 0x0000001f);
         }
 
         public void Zero()
