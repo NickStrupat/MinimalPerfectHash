@@ -33,7 +33,7 @@ namespace MPHTest.MPH
 	        set => table[i] = value;
         }
 
-        public Boolean GetBit(UInt64 i) 
+        public Boolean GetBit(UInt32 i) 
         {
             fixed (Byte* ptrTable = &table[0])
             {
