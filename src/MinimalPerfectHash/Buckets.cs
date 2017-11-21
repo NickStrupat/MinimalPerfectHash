@@ -40,8 +40,12 @@ namespace MPHTest.MPH
             public uint ItemsList; // offset
             uint _sizeBucketID;
 			
-            public uint Size	   { get { return _sizeBucketID; } set { _sizeBucketID = value; } }
-            public uint BucketID   { get { return _sizeBucketID; } set { _sizeBucketID = value; } }
+            public uint Size	   { get => _sizeBucketID;
+	            set => _sizeBucketID = value;
+            }
+            public uint BucketID   { get => _sizeBucketID;
+	            set => _sizeBucketID = value;
+            }
         }
 
         struct MapItem
@@ -59,16 +63,11 @@ namespace MPHTest.MPH
         readonly uint _m;				// number of keys
         readonly IKeySource _keySource;
 
-        public uint NBuckets
-        {
-            get { return _nbuckets; }
-        }
-        public uint N
-        {
-            get { return _n; }
-        }
+        public uint NBuckets => _nbuckets;
 
-        public Buckets(IKeySource keySource, double c)
+	    public uint N => _n;
+
+	    public Buckets(IKeySource keySource, double c)
         {
             _keySource = keySource;
 

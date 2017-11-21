@@ -18,7 +18,7 @@ using System;
 
 namespace MPHTest.MPH
 {
-    unsafe internal class BitArray
+    internal unsafe class BitArray
     {
         readonly byte[] _table;
 
@@ -29,8 +29,8 @@ namespace MPHTest.MPH
 
         public byte this[int i]
         {
-            get { return _table[i]; }
-            set { _table[i] = value; }
+            get => _table[i];
+	        set => _table[i] = value;
         }
 
         public bool GetBit(ulong i) 

@@ -70,9 +70,9 @@ namespace MPHTest.MPH
         /// <summary>
         /// Maximun value of the hash function.
         /// </summary>
-        public uint N { get { return _n; }}
+        public uint N => _n;
 
-        /// <summary>
+	    /// <summary>
         /// Compute the hash value associate with the key
         /// </summary>
         /// <param name="key">key from the original key set</param>
