@@ -1,5 +1,8 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Text;
+using MinimalPerfectHash;
 using Xunit;
 
 namespace Test
@@ -43,6 +46,21 @@ namespace Test
 
 	        Console.WriteLine("Total scan time : {0:0.000000} s", end / 1000.0);
 	        Console.WriteLine("Average key hash time : {0} ms", end / (Double)keyGenerator.KeyCount);
+
+	        var dic = new Dictionary<int, string>((int)keyGenerator.KeyCount);
+	        for (var i = 0; i < keyGenerator.KeyCount; i++)
+	        {
+		        dic.Add(i, i.ToString());
+	        }
+	        var mphrod = new MinimalPerfectReadOnlyDictionary<int, string>(dic, i => Encoding.UTF8.GetBytes($"KEY-{i}"));
+	        for (var i = 0; i < keyGenerator.KeyCount; i++)
+	        {
+		        Assert.Equal(dic[i], mphrod[i]);
+			}
+			Assert.Equal(dic.OrderBy(x => x.Key), mphrod.OrderBy(x => x.Key));
+			Assert.Equal(dic.Keys.OrderBy(x => x), mphrod.Keys.OrderBy(x => x));
+			Assert.Equal(dic.Values.OrderBy(x => x), mphrod.Values.OrderBy(x => x));
+
 		}
 
 		class KeyGenerator : MPHTest.MPH.IKeySource
