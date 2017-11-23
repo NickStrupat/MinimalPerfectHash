@@ -19,7 +19,7 @@ namespace Test
 	        // Derivate a minimum perfect hash function
 	        Console.WriteLine("Generating minimum perfect hash function for {0} keys", keyGenerator.KeyCount);
 	        var start = DateTime.Now;
-	        var hashFunction = MPHTest.MPH.MinPerfectHash.Create(keyGenerator, 1);
+	        var hashFunction = MinPerfectHash.Create(keyGenerator, 1);
 
 	        Console.WriteLine("Completed in {0:0.000000} s", DateTime.Now.Subtract(start).TotalMilliseconds / 1000.0);
 
@@ -78,7 +78,7 @@ namespace Test
 			}
 		}
 
-		class KeyGenerator : MPHTest.MPH.IKeySource
+		class KeyGenerator : IKeySource
 		{
 			UInt32 currentKey;
 
@@ -90,7 +90,7 @@ namespace Test
 
 			public void Rewind() => currentKey = 0;
 
-			UInt32 MPHTest.MPH.IKeySource.NbKeys => KeyCount;
+			UInt32 IKeySource.NbKeys => KeyCount;
 		}
 	}
 }

@@ -17,7 +17,7 @@
 
 using System;
 
-namespace MPHTest.MPH
+namespace MinimalPerfectHash
 {
     public interface IKeySource
     {

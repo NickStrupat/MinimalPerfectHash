@@ -17,7 +17,7 @@
 
 using System;
 
-namespace MPHTest.MPH
+namespace MinimalPerfectHash
 {
     /// <summary>
     /// Miller–Rabin primality test
