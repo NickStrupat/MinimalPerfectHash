@@ -60,7 +60,22 @@ namespace Test
 			Assert.Equal(dic.OrderBy(x => x.Key), mphrod.OrderBy(x => x.Key));
 			Assert.Equal(dic.Keys.OrderBy(x => x), mphrod.Keys.OrderBy(x => x));
 			Assert.Equal(dic.Values.OrderBy(x => x), mphrod.Values.OrderBy(x => x));
+        }
 
+        [Fact]
+		public void OutOfRangeKeysThatCollideOnHashFunctionFailEqualityCheck()
+		{
+			var keyGenerator = new KeyGenerator(2_000_000);
+			var dic = new Dictionary<int, string>((int)keyGenerator.KeyCount);
+			for (var i = 0; i < keyGenerator.KeyCount; i++)
+			{
+				dic.Add(i, i.ToString());
+			}
+			var mphrod = new MinimalPerfectReadOnlyDictionary<int, string>(dic, i => Encoding.UTF8.GetBytes($"KEY-{i}"));
+			for (var i = 0; i <keyGenerator.KeyCount; i++)
+			{
+				Assert.False(mphrod.TryGetValue((Int32)(i + keyGenerator.KeyCount), out var x));
+			}
 		}
 
 		class KeyGenerator : MPHTest.MPH.IKeySource
