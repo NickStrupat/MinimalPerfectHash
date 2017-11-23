@@ -65,19 +65,17 @@ namespace MinimalPerfectHash
 		{
 			var bytes = getKeyBytes(key);
 			var hash = hashFunction.Search(bytes);
-			if (hash >= table.Length)
+			if (hash < table.Length)
 			{
-				value = default(TValue);
-				return false;
+				var entry = table[hash];
+				if (comparer.Equals(entry.kvp.Key, key))
+				{
+					value = entry.kvp.Value;
+					return true;
+				}
 			}
-			var entry = table[hash];
-			if (!comparer.Equals(entry.kvp.Key, key))
-			{
-				value = default(TValue);
-				return false;
-			}
-			value = entry.kvp.Value;
-			return true;
+			value = default(TValue);
+			return false;
 		}
 
 		public TValue this[TKey key] => TryGetValue(key, out var value) ? value : throw new KeyNotFoundException();
