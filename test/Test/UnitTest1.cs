@@ -1,6 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Runtime.Serialization;
+using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
 using MinimalPerfectHash;
 using Xunit;
@@ -47,12 +50,12 @@ namespace Test
 	        Console.WriteLine("Total scan time : {0:0.000000} s", end / 1000.0);
 	        Console.WriteLine("Average key hash time : {0} ms", end / (Double)keyGenerator.KeyCount);
 
-	        var dic = new Dictionary<int, string>((int)keyGenerator.KeyCount);
+	        var dic = new Dictionary<Int32, String>((Int32)keyGenerator.KeyCount);
 	        for (var i = 0; i < keyGenerator.KeyCount; i++)
 	        {
 		        dic.Add(i, i.ToString());
 	        }
-	        var mphrod = new MinimalPerfectReadOnlyDictionary<int, string>(dic, i => Encoding.UTF8.GetBytes($"KEY-{i}"));
+	        var mphrod = new MinimalPerfectReadOnlyDictionary<Int32, String>(dic, GetKeyBytes);
 	        for (var i = 0; i < keyGenerator.KeyCount; i++)
 	        {
 		        Assert.Equal(dic[i], mphrod[i]);
@@ -62,19 +65,49 @@ namespace Test
 			Assert.Equal(dic.Values.OrderBy(x => x), mphrod.Values.OrderBy(x => x));
         }
 
-        [Fact]
+	    private Byte[] GetKeyBytes(Int32 i) => Encoding.UTF8.GetBytes($"KEY-{i}");
+
+	    [Fact]
 		public void OutOfRangeKeysThatCollideOnHashFunctionFailEqualityCheck()
 		{
-			var keyGenerator = new KeyGenerator(2_000_000);
-			var dic = new Dictionary<int, string>((int)keyGenerator.KeyCount);
-			for (var i = 0; i < keyGenerator.KeyCount; i++)
+			const Int32 keyCount = 2_000_000;
+			var dic = new Dictionary<Int32, String>(keyCount);
+			for (var i = 0; i < keyCount; i++)
 			{
 				dic.Add(i, i.ToString());
 			}
-			var mphrod = new MinimalPerfectReadOnlyDictionary<int, string>(dic, i => Encoding.UTF8.GetBytes($"KEY-{i}"));
-			for (var i = 0; i <keyGenerator.KeyCount; i++)
+			var mphrod = new MinimalPerfectReadOnlyDictionary<Int32, String>(dic, GetKeyBytes);
+			for (var i = 0; i < keyCount; i++)
 			{
-				Assert.False(mphrod.TryGetValue((Int32)(i + keyGenerator.KeyCount), out var x));
+				Assert.False(mphrod.TryGetValue((i + keyCount), out var x));
+			}
+		}
+
+	    [Fact]
+	    public void HashFunctionSerialization()
+		{
+			const Int32 keyCount = 2_000;
+			var keyGenerator = new KeyGenerator(keyCount);
+			var hashFunction = MinPerfectHash.Create(keyGenerator, 1);
+			var table = new String[hashFunction.N];
+			for (var i = 0; i < keyCount; i++)
+			{
+				var key = $"KEY-{i}";
+				var hash = hashFunction.Search(Encoding.UTF8.GetBytes(key));
+				table[hash] = key;
+			}
+			IFormatter formatter = new BinaryFormatter();
+			using (var ms = new MemoryStream(1_000))
+			{
+				formatter.Serialize(ms, hashFunction);
+				ms.Position = 0;
+				var hashFunction2 = (MinPerfectHash) formatter.Deserialize(ms);
+				for (var i = 0; i < keyCount; i++)
+				{
+					var key = $"KEY-{i}";
+					var hash = hashFunction2.Search(Encoding.UTF8.GetBytes(key));
+					Assert.Equal(key, table[hash]);
+				}
 			}
 		}
 
