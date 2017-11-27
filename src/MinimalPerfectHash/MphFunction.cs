@@ -76,7 +76,7 @@ namespace MinimalPerfectHash
         /// </summary>
         /// <param name="key">key from the original key set</param>
         /// <returns>Hash value (0 &gt; hash &gt; N)</returns>
-        public UInt32 Search(Byte[] key)
+        public UInt32 GetHash(Byte[] key)
         {
             var hl = new UInt32[3];
             JenkinsHash.HashVector(hashSeed, key, hl);

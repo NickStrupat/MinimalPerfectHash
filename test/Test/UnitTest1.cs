@@ -38,7 +38,7 @@ namespace Test
 	        start = DateTime.Now;
 	        for (var test = 0U; test < keyGenerator.KeyCount; test++)
 	        {
-		        var hash = (Int32)hashFunction.Search(keyGenerator.Read());
+		        var hash = (Int32)hashFunction.GetHash(keyGenerator.Read());
 		        if (used[hash])
 		        {
 					Assert.True(false, $"FAILED - Collision detected at {test}");
@@ -94,7 +94,7 @@ namespace Test
 			for (var i = 0; i < keyCount; i++)
 			{
 				var key = $"KEY-{i}";
-				var hash = hashFunction.Search(Encoding.UTF8.GetBytes(key));
+				var hash = hashFunction.GetHash(Encoding.UTF8.GetBytes(key));
 				table[hash] = key;
 			}
 			IFormatter formatter = new BinaryFormatter();
@@ -106,7 +106,7 @@ namespace Test
 				for (var i = 0; i < keyCount; i++)
 				{
 					var key = $"KEY-{i}";
-					var hash = hashFunction2.Search(Encoding.UTF8.GetBytes(key));
+					var hash = hashFunction2.GetHash(Encoding.UTF8.GetBytes(key));
 					Assert.Equal(key, table[hash]);
 				}
 			}

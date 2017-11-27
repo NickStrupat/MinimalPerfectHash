@@ -35,7 +35,7 @@ namespace MinimalPerfectHash
 			foreach (var kvp in keyGenerator.Dictionary)
 			{
 				var bytes = getKeyBytes(kvp.Key);
-				var hash = hashFunction.Search(bytes);
+				var hash = hashFunction.GetHash(bytes);
 				table[hash] = (1, kvp);
 			}
 		}
@@ -74,7 +74,7 @@ namespace MinimalPerfectHash
 		public Boolean TryGetValue(TKey key, out TValue value)
 		{
 			var bytes = getKeyBytes(key);
-			var hash = hashFunction.Search(bytes);
+			var hash = hashFunction.GetHash(bytes);
 			if (hash < table.Length)
 			{
 				var entry = table[hash];
