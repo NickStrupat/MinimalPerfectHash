@@ -13,17 +13,24 @@ namespace MinimalPerfectHash
 		private readonly MinPerfectHash hashFunction;
 
 		public Int32 Count { get; }
+		private const Double DefaultLoadFactor = 0.99d;
 
+		/// <param name="loadFactor">0.5 &lt; loadFactor &gt; 0.99</param>
 		public MinimalPerfectReadOnlyDictionary(
 			IEnumerable<KeyValuePair<TKey, TValue>> dictionary,
 			IEqualityComparer<TKey> comparer,
-			Func<TKey, Byte[]> getKeyBytes)
+			Func<TKey, Byte[]> getKeyBytes,
+			Double loadFactor = DefaultLoadFactor)
 		{
 			this.comparer = comparer ?? throw new ArgumentNullException(nameof(comparer));
 			this.getKeyBytes = getKeyBytes ?? throw new ArgumentNullException(nameof(getKeyBytes));
+			if (loadFactor < 0.5)
+				loadFactor = 0.5;
+			if (loadFactor >= 0.99)
+				loadFactor = 0.99;
 			var keyGenerator = new KeyGenerator(dictionary ?? throw new ArgumentNullException(nameof(dictionary)), getKeyBytes);
 			Count = checked ((Int32) keyGenerator.NbKeys);
-			hashFunction = MinPerfectHash.Create(keyGenerator, 1);
+			hashFunction = MinPerfectHash.Create(keyGenerator, loadFactor);
 			table = new (Byte, KeyValuePair<TKey, TValue>)[hashFunction.N];
 			foreach (var kvp in keyGenerator.Dictionary)
 			{
@@ -33,16 +40,20 @@ namespace MinimalPerfectHash
 			}
 		}
 
+		/// <param name="loadFactor">0.5 &lt; loadFactor &gt; 0.99</param>
 		public MinimalPerfectReadOnlyDictionary(
 			IEnumerable<KeyValuePair<TKey, TValue>> dictionary,
-			Func<TKey, Byte[]> getKeyBytes)
-		: this(dictionary, EqualityComparer<TKey>.Default, getKeyBytes)
+			Func<TKey, Byte[]> getKeyBytes,
+			Double loadFactor = DefaultLoadFactor)
+		: this(dictionary, EqualityComparer<TKey>.Default, getKeyBytes, loadFactor)
 		{}
 
+		/// <param name="loadFactor">0.5 &lt; loadFactor &gt; 0.99</param>
 		public MinimalPerfectReadOnlyDictionary(
 			Dictionary<TKey, TValue> dictionary,
-			Func<TKey, Byte[]> getKeyBytes)
-		: this (dictionary, dictionary.Comparer, getKeyBytes)
+			Func<TKey, Byte[]> getKeyBytes,
+			Double loadFactor = DefaultLoadFactor)
+		: this (dictionary, dictionary.Comparer, getKeyBytes, loadFactor)
 		{}
 
 		private IEnumerable<KeyValuePair<TKey, TValue>> GetEnumerable()
