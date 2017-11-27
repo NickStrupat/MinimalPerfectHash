@@ -122,8 +122,6 @@ namespace Test
 			public Byte[] Read() => Encoding.UTF8.GetBytes($"KEY-{currentKey++}");
 
 			public void Rewind() => currentKey = 0;
-
-			UInt32 IKeySource.NbKeys => KeyCount;
 		}
 	}
 }

@@ -75,7 +75,7 @@ namespace MinimalPerfectHash
 			this.keySource = keySource;
 
 			var loadFactor = c;
-			m = keySource.NbKeys;
+			m = keySource.KeyCount;
 			nbuckets = m / KeysPerBucket + 1;
 
 			if (loadFactor < 0.5)

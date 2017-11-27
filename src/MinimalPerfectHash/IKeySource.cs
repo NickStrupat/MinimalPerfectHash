@@ -19,10 +19,10 @@ using System;
 
 namespace MinimalPerfectHash
 {
-    public interface IKeySource
-    {
-        UInt32    NbKeys { get; }
-        Byte[]  Read();
-        void    Rewind();
-    }
+	public interface IKeySource
+	{
+		UInt32 KeyCount { get; }
+		Byte[] Read();
+		void Rewind();
+	}
 }

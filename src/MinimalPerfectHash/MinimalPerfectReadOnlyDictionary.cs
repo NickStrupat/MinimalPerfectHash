@@ -29,7 +29,7 @@ namespace MinimalPerfectHash
 			if (loadFactor >= 0.99)
 				loadFactor = 0.99;
 			var keyGenerator = new KeyGenerator(dictionary ?? throw new ArgumentNullException(nameof(dictionary)), getKeyBytes);
-			Count = checked ((Int32) keyGenerator.NbKeys);
+			Count = checked ((Int32) keyGenerator.KeyCount);
 			hashFunction = MinPerfectHash.Create(keyGenerator, loadFactor);
 			table = new (Byte, KeyValuePair<TKey, TValue>)[hashFunction.N];
 			foreach (var kvp in keyGenerator.Dictionary)
@@ -100,24 +100,24 @@ namespace MinimalPerfectHash
 			{
 				switch (dictionary) {
 					case ICollection<KeyValuePair<TKey, TValue>> icollection:
-						NbKeys = (UInt32) icollection.Count;
+						KeyCount = (UInt32) icollection.Count;
 						this.Dictionary = dictionary;
 						break;
 					case IReadOnlyCollection<KeyValuePair<TKey, TValue>> ireadOnlyCollection:
-						NbKeys = (UInt32) ireadOnlyCollection.Count;
+						KeyCount = (UInt32) ireadOnlyCollection.Count;
 						this.Dictionary = dictionary;
 						break;
 					default:
 						var list = dictionary.ToList();
 						this.Dictionary = list;
-						NbKeys = (UInt32) list.Count;
+						KeyCount = (UInt32) list.Count;
 						break;
 				}
 				this.enumerator = this.Dictionary.GetEnumerator();
 				this.getKeyBytes = getKeyBytes;
 			}
 
-			public UInt32 NbKeys { get; }
+			public UInt32 KeyCount { get; }
 
 			public Byte[] Read()
 			{
