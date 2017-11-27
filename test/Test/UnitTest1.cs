@@ -13,8 +13,9 @@ namespace Test
     public class UnitTest1
     {
         [Fact]
-        public void Test1()
+		public void Test1()
         {
+	        const Double loadFactor = 1.0d;
 
 	        // Create a unique string generator
 	        var keyGenerator = new KeyGenerator(2_000_000);
@@ -22,7 +23,7 @@ namespace Test
 	        // Derivate a minimum perfect hash function
 	        Console.WriteLine("Generating minimum perfect hash function for {0} keys", keyGenerator.KeyCount);
 	        var start = DateTime.Now;
-	        var hashFunction = MinPerfectHash.Create(keyGenerator, 1);
+	        var hashFunction = new MinPerfectHash(keyGenerator, loadFactor);
 
 	        Console.WriteLine("Completed in {0:0.000000} s", DateTime.Now.Subtract(start).TotalMilliseconds / 1000.0);
 
@@ -55,7 +56,7 @@ namespace Test
 	        {
 		        dic.Add(i, i.ToString());
 	        }
-	        var mphrod = new MinimalPerfectReadOnlyDictionary<Int32, String>(dic, GetKeyBytes);
+	        var mphrod = new MinimalPerfectReadOnlyDictionary<Int32, String>(dic, GetKeyBytes, loadFactor);
 	        for (var i = 0; i < keyGenerator.KeyCount; i++)
 	        {
 		        Assert.Equal(dic[i], mphrod[i]);
@@ -88,7 +89,7 @@ namespace Test
 		{
 			const Int32 keyCount = 2_000;
 			var keyGenerator = new KeyGenerator(keyCount);
-			var hashFunction = MinPerfectHash.Create(keyGenerator, 1);
+			var hashFunction = new MinPerfectHash(keyGenerator, 1);
 			var table = new String[hashFunction.N];
 			for (var i = 0; i < keyCount; i++)
 			{

@@ -30,7 +30,7 @@ namespace MinimalPerfectHash
 				loadFactor = 0.99;
 			var keyGenerator = new KeyGenerator(dictionary ?? throw new ArgumentNullException(nameof(dictionary)), getKeyBytes);
 			Count = checked ((Int32) keyGenerator.KeyCount);
-			hashFunction = MinPerfectHash.Create(keyGenerator, loadFactor);
+			hashFunction = new MinPerfectHash(keyGenerator, loadFactor);
 			table = new (Byte, KeyValuePair<TKey, TValue>)[hashFunction.N];
 			foreach (var kvp in keyGenerator.Dictionary)
 			{

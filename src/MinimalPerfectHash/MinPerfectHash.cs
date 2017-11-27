@@ -25,54 +25,51 @@ namespace MinimalPerfectHash
     [Serializable]
     public class MinPerfectHash
     {
-        CompressedSeq cs;
-        UInt32 hashSeed, n, nbuckets;
+        private readonly CompressedSeq cs;
+        private readonly UInt32 hashSeed;
+	    private readonly UInt32 n;
+	    private readonly UInt32 nBuckets;
 
-        /// <summary>
-        /// Create a minimum perfect hash function for the provided key set
-        /// </summary>
-        /// <param name="keySource">Key source</param>
-        /// <param name="c">Load factor (.5 &gt; c &gt; .99)</param>
-        /// <returns>Created Minimum Perfect Hash function</returns>
-        public static MinPerfectHash Create(IKeySource keySource, Double c)
-        {
-            var buckets = new Buckets(keySource, c);
-            var dispTable = new UInt32[buckets.NBuckets];
-            UInt32 hashSeed;
+	    /// <summary>
+	    /// Maximun value of the hash function.
+	    /// </summary>
+	    public UInt32 N => n;
 
-            var iteration = 100;
-            for (; ; iteration--)
-            {
-                UInt32 maxBucketSize;
-                if (!buckets.MappingPhase(out hashSeed, out maxBucketSize))
-                {
-                    throw new Exception("Mapping failure. Duplicate keys?");
-                }
+		/// <summary>
+		/// Create a minimum perfect hash function for the provided key set
+		/// </summary>
+		/// <param name="keySource">Key source</param>
+		/// <param name="loadFactor">Load factor (.5 &gt; c &gt; .99)</param>
+		public MinPerfectHash(IKeySource keySource, Double loadFactor)
+		{
+			var buckets = new Buckets(keySource, loadFactor);
+			var dispTable = new UInt32[buckets.NBuckets];
 
-                var sortedLists = buckets.OrderingPhase(maxBucketSize);
-                var searchingSuccess = buckets.SearchingPhase(maxBucketSize, sortedLists, dispTable);
+			var iteration = 100;
+			for (; ; iteration--)
+			{
+				if (!buckets.MappingPhase(out hashSeed, out var maxBucketSize))
+				{
+					throw new Exception("Mapping failure. Duplicate keys?");
+				}
 
-                if (searchingSuccess)
+				var sortedLists = buckets.OrderingPhase(maxBucketSize);
+				var searchingSuccess = buckets.SearchingPhase(maxBucketSize, sortedLists, dispTable);
+
+				if (searchingSuccess)
 					break;
 
-                if (iteration <= 0)
-                {
-                    throw new Exception("Too many iteration");
-                }
-            }
+				if (iteration <= 0)
+				{
+					throw new Exception("Too many iteration");
+				}
+			}
 
-            var cs = new CompressedSeq();
-            cs.Generate(dispTable, (UInt32)dispTable.Length);
-
-            var ret = new MinPerfectHash { hashSeed = hashSeed, cs = cs, nbuckets = buckets.NBuckets, n = buckets.N };
-
-            return ret;
-        }
-
-        /// <summary>
-        /// Maximun value of the hash function.
-        /// </summary>
-        public UInt32 N => n;
+			cs = new CompressedSeq();
+			cs.Generate(dispTable, (UInt32)dispTable.Length);
+			nBuckets = buckets.NBuckets;
+			n = buckets.N;
+		}
 
 	    /// <summary>
         /// Compute the hash value associate with the key
@@ -83,7 +80,7 @@ namespace MinimalPerfectHash
         {
             var hl = new UInt32[3];
             JenkinsHash.HashVector(hashSeed, key, hl);
-            var g = hl[0] % nbuckets;
+            var g = hl[0] % nBuckets;
             var f = hl[1] % n;
             var h = hl[2] % (n - 1) + 1;
 
