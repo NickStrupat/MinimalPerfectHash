@@ -23,7 +23,7 @@ namespace Test
 	        // Derivate a minimum perfect hash function
 	        Console.WriteLine("Generating minimum perfect hash function for {0} keys", keyGenerator.KeyCount);
 	        var start = DateTime.Now;
-	        var hashFunction = new MinPerfectHash(keyGenerator, loadFactor);
+	        var hashFunction = new MphFunction(keyGenerator, loadFactor);
 
 	        Console.WriteLine("Completed in {0:0.000000} s", DateTime.Now.Subtract(start).TotalMilliseconds / 1000.0);
 
@@ -56,7 +56,7 @@ namespace Test
 	        {
 		        dic.Add(i, i.ToString());
 	        }
-	        var mphrod = new MinimalPerfectReadOnlyDictionary<Int32, String>(dic, GetKeyBytes, loadFactor);
+	        var mphrod = new MphReadOnlyDictionary<Int32, String>(dic, GetKeyBytes, loadFactor);
 	        for (var i = 0; i < keyGenerator.KeyCount; i++)
 	        {
 		        Assert.Equal(dic[i], mphrod[i]);
@@ -77,7 +77,7 @@ namespace Test
 			{
 				dic.Add(i, i.ToString());
 			}
-			var mphrod = new MinimalPerfectReadOnlyDictionary<Int32, String>(dic, GetKeyBytes);
+			var mphrod = new MphReadOnlyDictionary<Int32, String>(dic, GetKeyBytes);
 			for (var i = 0; i < keyCount; i++)
 			{
 				Assert.False(mphrod.TryGetValue((i + keyCount), out var x));
@@ -89,7 +89,7 @@ namespace Test
 		{
 			const Int32 keyCount = 2_000;
 			var keyGenerator = new KeyGenerator(keyCount);
-			var hashFunction = new MinPerfectHash(keyGenerator, 1);
+			var hashFunction = new MphFunction(keyGenerator, 1);
 			var table = new String[hashFunction.N];
 			for (var i = 0; i < keyCount; i++)
 			{
@@ -102,7 +102,7 @@ namespace Test
 			{
 				formatter.Serialize(ms, hashFunction);
 				ms.Position = 0;
-				var hashFunction2 = (MinPerfectHash) formatter.Deserialize(ms);
+				var hashFunction2 = (MphFunction) formatter.Deserialize(ms);
 				for (var i = 0; i < keyCount; i++)
 				{
 					var key = $"KEY-{i}";

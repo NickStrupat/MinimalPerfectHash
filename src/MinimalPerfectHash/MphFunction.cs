@@ -23,7 +23,7 @@ namespace MinimalPerfectHash
     /// Minimum Perfect Hash function class
     /// </summary>
     [Serializable]
-    public class MinPerfectHash
+    public class MphFunction
     {
         private readonly CompressedSeq cs;
         private readonly UInt32 hashSeed;
@@ -40,7 +40,7 @@ namespace MinimalPerfectHash
 		/// </summary>
 		/// <param name="keySource">Key source</param>
 		/// <param name="loadFactor">Load factor (.5 &gt; c &gt; .99)</param>
-		public MinPerfectHash(IKeySource keySource, Double loadFactor)
+		public MphFunction(IKeySource keySource, Double loadFactor)
 		{
 			var buckets = new Buckets(keySource, loadFactor);
 			var dispTable = new UInt32[buckets.NBuckets];
