@@ -2,6 +2,15 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
+    <Version>0.1.0</Version>
+    <Authors>Laurent Dupuis, Nick Strupat</Authors>
+    <Company />
+    <Product />
+    <Description>Minimal perfect hash function library for .NET</Description>
+    <PackageLicenseUrl>https://github.com/NickStrupat/MinimalPerfectHash/blob/master/LICENSE</PackageLicenseUrl>
+    <PackageProjectUrl>https://github.com/NickStrupat/MinimalPerfectHash</PackageProjectUrl>
+    <PackageTags>minimal-perfect-hash hash-function mph hashing</PackageTags>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
