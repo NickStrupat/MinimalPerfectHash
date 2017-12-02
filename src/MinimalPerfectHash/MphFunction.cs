@@ -50,13 +50,13 @@ namespace MinimalPerfectHash
     {
         private readonly CompressedSeq cs;
         private readonly UInt32 hashSeed;
-	    private readonly UInt32 n;
+	    private readonly UInt32 maxValue;
 	    private readonly UInt32 nBuckets;
 
 	    /// <summary>
 	    /// Maximun value of the hash function.
 	    /// </summary>
-	    public UInt32 N => n;
+	    public UInt32 MaxValue => maxValue;
 
 		/// <summary>
 		/// Create a minimum perfect hash function for the provided key set
@@ -97,7 +97,7 @@ namespace MinimalPerfectHash
 			cs = new CompressedSeq();
 			cs.Generate(dispTable, (UInt32)dispTable.Length);
 			nBuckets = buckets.NBuckets;
-			n = buckets.N;
+			maxValue = buckets.N;
 		}
 
 	    /// <summary>
@@ -110,13 +110,13 @@ namespace MinimalPerfectHash
             var hl = new UInt32[3];
             JenkinsHash.HashVector(hashSeed, key, hl);
             var g = hl[0] % nBuckets;
-            var f = hl[1] % n;
-            var h = hl[2] % (n - 1) + 1;
+            var f = hl[1] % maxValue;
+            var h = hl[2] % (maxValue - 1) + 1;
 
             var disp = cs.Query(g);
-            var probe0Num = disp % n;
-            var probe1Num = disp / n;
-            var position = (UInt32)((f + ((UInt64)h) * probe0Num + probe1Num) % n);
+            var probe0Num = disp % maxValue;
+            var probe1Num = disp / maxValue;
+            var position = (UInt32)((f + ((UInt64)h) * probe0Num + probe1Num) % maxValue);
             return position;
 		}
 	}

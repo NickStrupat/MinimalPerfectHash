@@ -36,7 +36,7 @@ namespace MinimalPerfectHash
 				count,
 				getKeyBytes,
 				loadFactor);
-			table = new (Byte, KeyValuePair<TKey, TValue>)[hashFunction.N];
+			table = new (Byte, KeyValuePair<TKey, TValue>)[hashFunction.MaxValue];
 			foreach (var kvp in dict)
 			{
 				var bytes = getKeyBytes(kvp.Key);

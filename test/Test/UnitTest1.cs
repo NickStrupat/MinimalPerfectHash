@@ -29,11 +29,11 @@ namespace Test
 
 	        // Show the extra hash space necessary
 	        Console.WriteLine("Hash function map {0} keys to {1} hashes (load factor: {2:0.000000}%)",
-		        KeyCount, hashFunction.N,
-		        ((KeyCount * 100) / (Double)hashFunction.N));
+		        KeyCount, hashFunction.MaxValue,
+		        ((KeyCount * 100) / (Double)hashFunction.MaxValue));
 
 	        // Check for any collision
-	        var used = new System.Collections.BitArray((Int32)hashFunction.N);
+	        var used = new System.Collections.BitArray((Int32)hashFunction.MaxValue);
 
 	        start = DateTime.Now;
 	        for (var test = 0U; test < KeyCount; test++)
@@ -89,7 +89,7 @@ namespace Test
 		{
 			const Int32 keyCount = 2_000;
 			var hashFunction = new MphFunction<Int32>(Enumerable.Range(0, keyCount), keyCount, GetKeyBytes, 1);
-			var table = new String[hashFunction.N];
+			var table = new String[hashFunction.MaxValue];
 			for (var i = 0; i < keyCount; i++)
 			{
 				var key = $"KEY-{i}";
