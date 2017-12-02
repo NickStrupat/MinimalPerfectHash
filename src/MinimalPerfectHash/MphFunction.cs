@@ -72,7 +72,7 @@ namespace MinimalPerfectHash
 		protected MphFunction(IEnumerable<Byte[]> keySource, UInt32 keyCount, Double loadFactor)
 		{
 			var buckets = new Buckets(keySource, keyCount, loadFactor);
-			var dispTable = new UInt32[buckets.NBuckets];
+			var dispTable = new UInt32[buckets.BucketCount];
 
 			var iteration = 100;
 			for (; ; iteration--)
@@ -96,8 +96,8 @@ namespace MinimalPerfectHash
 
 			cs = new CompressedSeq();
 			cs.Generate(dispTable, (UInt32)dispTable.Length);
-			nBuckets = buckets.NBuckets;
-			maxValue = buckets.N;
+			nBuckets = buckets.BucketCount;
+			maxValue = buckets.BinCount;
 		}
 
 	    /// <summary>

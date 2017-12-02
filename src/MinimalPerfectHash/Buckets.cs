@@ -62,42 +62,38 @@ namespace MinimalPerfectHash
 
 		Bucket[] buckets;
 		Item[] items;
-		readonly UInt32 nbuckets;       // number of buckets
-		readonly UInt32 n;              // number of bins
-		readonly UInt32 m;              // number of keys
+		readonly UInt32 keyCount;
 		readonly IEnumerable<Byte[]> keyBytes;
-		//readonly IKeySource keySource;
 
-		public UInt32 NBuckets => nbuckets;
-
-		public UInt32 N => n;
+		public UInt32 BucketCount { get; }
+		public UInt32 BinCount { get; }
 
 		public Buckets(IEnumerable<Byte[]> keyBytes, UInt32 keyCount, Double c)
 		{
 			this.keyBytes = keyBytes;
 
 			var loadFactor = c;
-			m = keyCount;
-			nbuckets = m / KeysPerBucket + 1;
+			this.keyCount = keyCount;
+			BucketCount = this.keyCount / KeysPerBucket + 1;
 
 			if (loadFactor < 0.5)
 				loadFactor = 0.5;
 			if (loadFactor >= 0.99)
 				loadFactor = 0.99;
 
-			n = (UInt32)(m / (loadFactor)) + 1;
+			BinCount = (UInt32)(this.keyCount / (loadFactor)) + 1;
 
-			if (n % 2 == 0)
-				n++;
+			if (BinCount % 2 == 0)
+				BinCount++;
 			for (; ; )
 			{
-				if (MillerRabin.CheckPrimality(n))
+				if (MillerRabin.CheckPrimality(BinCount))
 					break;
-				n += 2; // just odd numbers can be primes for n > 2
+				BinCount += 2; // just odd numbers can be primes for n > 2
 			}
 
-			buckets = new Bucket[nbuckets];
-			items = new Item[m];
+			buckets = new Bucket[BucketCount];
+			items = new Item[this.keyCount];
 
 		}
 
@@ -122,14 +118,14 @@ namespace MinimalPerfectHash
 
 		void BucketsClean()
 		{
-			for (UInt32 i = 0; i < nbuckets; i++)
+			for (UInt32 i = 0; i < BucketCount; i++)
 				buckets[i].Size = 0;
 		}
 
 		public Boolean MappingPhase(out UInt32 hashSeed, out UInt32 maxBucketSize)
 		{
 			var hl = new UInt32[3];
-			var mapItems = new MapItem[m];
+			var mapItems = new MapItem[keyCount];
 			UInt32 mappingIterations = 1000;
 			var rdm = new Random(111);
 
@@ -137,22 +133,22 @@ namespace MinimalPerfectHash
 			for (; ; )
 			{
 				mappingIterations--;
-				hashSeed = (UInt32)rdm.Next((Int32)m); // ((cmph_uint32)rand() % this->_m);
+				hashSeed = (UInt32)rdm.Next((Int32)keyCount); // ((cmph_uint32)rand() % this->_m);
 
 				BucketsClean();
 
 				UInt32 i;
 				using (var keyByteEnumerator = keyBytes.GetEnumerator())
 				{
-					for (i = 0; i < m; i++)
+					for (i = 0; i < keyCount; i++)
 					{
 						if (!keyByteEnumerator.MoveNext())
 							break;
 						JenkinsHash.HashVector(hashSeed, keyByteEnumerator.Current, hl);
 
-						UInt32 g = hl[0] % nbuckets;
-						mapItems[i].F = hl[1] % n;
-						mapItems[i].H = hl[2] % (n - 1) + 1;
+						UInt32 g = hl[0] % BucketCount;
+						mapItems[i].F = hl[1] % BinCount;
+						mapItems[i].H = hl[2] % (BinCount - 1) + 1;
 						mapItems[i].BucketNum = g;
 
 						buckets[g].Size++;
@@ -163,18 +159,18 @@ namespace MinimalPerfectHash
 					}
 				}
 				buckets[0].ItemsList = 0;
-				for (i = 1; i < nbuckets; i++)
+				for (i = 1; i < BucketCount; i++)
 				{
 					buckets[i].ItemsList = buckets[i - 1].ItemsList + buckets[i - 1].Size;
 					buckets[i - 1].Size = 0;
 				}
 				buckets[i - 1].Size = 0;
-				for (i = 0; i < m; i++)
+				for (i = 0; i < keyCount; i++)
 				{
 					if (!BucketsInsert(mapItems, i))
 						break;
 				}
-				if (i == m)
+				if (i == keyCount)
 				{
 					return true; // SUCCESS
 				}
@@ -194,7 +190,7 @@ namespace MinimalPerfectHash
 			UInt32 i;
 			UInt32 bucketSize, position;
 
-			for (i = 0; i < nbuckets; i++)
+			for (i = 0; i < BucketCount; i++)
 			{
 				bucketSize = inputBuckets[i].Size;
 				if (bucketSize == 0)
@@ -212,9 +208,9 @@ namespace MinimalPerfectHash
 
 			sortedLists[i - 1].Size = 0;
 			// Store the buckets in a new array which is sorted by bucket sizes
-			var outputBuckets = new Bucket[nbuckets];
+			var outputBuckets = new Bucket[BucketCount];
 
-			for (i = 0; i < nbuckets; i++)
+			for (i = 0; i < BucketCount; i++)
 			{
 				bucketSize = inputBuckets[i].Size;
 				if (bucketSize == 0)
@@ -231,7 +227,7 @@ namespace MinimalPerfectHash
 			buckets = outputBuckets;
 
 			// Store the items according to the new order of buckets.
-			var outputItems = new Item[n];
+			var outputItems = new Item[BinCount];
 			position = 0;
 
 			for (bucketSize = 1; bucketSize <= maxBucketSize; bucketSize++)
@@ -267,7 +263,7 @@ namespace MinimalPerfectHash
 			// try place bucket with probe_num
 			for (i = 0; i < size; i++) // placement
 			{
-				position = (UInt32)((items[p].F + ((UInt64)items[p].H) * probe0Num + probe1Num) % n);
+				position = (UInt32)((items[p].F + ((UInt64)items[p].H) * probe0Num + probe1Num) % BinCount);
 				if (occupTable.GetBit(position))
 				{
 					break;
@@ -284,7 +280,7 @@ namespace MinimalPerfectHash
 					{
 						break;
 					}
-					position = (UInt32)((items[p].F + ((UInt64)items[p].H) * probe0Num + probe1Num) % n);
+					position = (UInt32)((items[p].F + ((UInt64)items[p].H) * probe0Num + probe1Num) % BinCount);
 					occupTable.UnSetBit(position);
 
 					// 				([position/32]^=(1<<(position%32));
@@ -298,9 +294,9 @@ namespace MinimalPerfectHash
 
 		public Boolean SearchingPhase(UInt32 maxBucketSize, BucketSortedList[] sortedLists, UInt32[] dispTable)
 		{
-			var maxProbes = (UInt32)(((Math.Log(m) / Math.Log(2.0)) / 20) * MaxProbesBase);
+			var maxProbes = (UInt32)(((Math.Log(keyCount) / Math.Log(2.0)) / 20) * MaxProbesBase);
 			UInt32 i;
-			var occupTable = new BitArray((Int32)(((n + 31) / 32) * sizeof(UInt32)));
+			var occupTable = new BitArray((Int32)(((BinCount + 31) / 32) * sizeof(UInt32)));
 
 			for (i = maxBucketSize; i > 0; i--)
 			{
@@ -317,7 +313,7 @@ namespace MinimalPerfectHash
 						// if bucket is successfully placed remove it from list
 						if (PlaceBucketProbe(probe0Num, probe1Num, currBucket, i, occupTable))
 						{
-							dispTable[buckets[currBucket].BucketId] = probe0Num + probe1Num * n;
+							dispTable[buckets[currBucket].BucketId] = probe0Num + probe1Num * BinCount;
 						}
 						else
 						{
@@ -329,13 +325,13 @@ namespace MinimalPerfectHash
 					}
 					sortedLists[i].Size = nonPlacedBucket;
 					probe0Num++;
-					if (probe0Num >= n)
+					if (probe0Num >= BinCount)
 					{
-						probe0Num -= n;
+						probe0Num -= BinCount;
 						probe1Num++;
 					}
 					probeNum++;
-					if (probeNum < maxProbes && probe1Num < n)
+					if (probeNum < maxProbes && probe1Num < BinCount)
 						continue;
 					sortedLists[i].Size = sortedListSize;
 					return false;
