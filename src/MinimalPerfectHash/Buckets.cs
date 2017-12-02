@@ -16,6 +16,7 @@
  * ........................................................................ */
 
 using System;
+using System.Collections.Generic;
 
 namespace MinimalPerfectHash
 {
@@ -64,18 +65,19 @@ namespace MinimalPerfectHash
 		readonly UInt32 nbuckets;       // number of buckets
 		readonly UInt32 n;              // number of bins
 		readonly UInt32 m;              // number of keys
-		readonly IKeySource keySource;
+		readonly IEnumerable<Byte[]> keyBytes;
+		//readonly IKeySource keySource;
 
 		public UInt32 NBuckets => nbuckets;
 
 		public UInt32 N => n;
 
-		public Buckets(IKeySource keySource, Double c)
+		public Buckets(IEnumerable<Byte[]> keyBytes, UInt32 keyCount, Double c)
 		{
-			this.keySource = keySource;
+			this.keyBytes = keyBytes;
 
 			var loadFactor = c;
-			m = keySource.KeyCount;
+			m = keyCount;
 			nbuckets = m / KeysPerBucket + 1;
 
 			if (loadFactor < 0.5)
@@ -139,22 +141,25 @@ namespace MinimalPerfectHash
 
 				BucketsClean();
 
-				keySource.Rewind();
-
 				UInt32 i;
-				for (i = 0; i < m; i++)
+				using (var keyByteEnumerator = keyBytes.GetEnumerator())
 				{
-					JenkinsHash.HashVector(hashSeed, keySource.Read(), hl);
-
-					UInt32 g = hl[0] % nbuckets;
-					mapItems[i].F = hl[1] % n;
-					mapItems[i].H = hl[2] % (n - 1) + 1;
-					mapItems[i].BucketNum = g;
-
-					buckets[g].Size++;
-					if (buckets[g].Size > maxBucketSize)
+					for (i = 0; i < m; i++)
 					{
-						maxBucketSize = buckets[g].Size;
+						if (!keyByteEnumerator.MoveNext())
+							break;
+						JenkinsHash.HashVector(hashSeed, keyByteEnumerator.Current, hl);
+
+						UInt32 g = hl[0] % nbuckets;
+						mapItems[i].F = hl[1] % n;
+						mapItems[i].H = hl[2] % (n - 1) + 1;
+						mapItems[i].BucketNum = g;
+
+						buckets[g].Size++;
+						if (buckets[g].Size > maxBucketSize)
+						{
+							maxBucketSize = buckets[g].Size;
+						}
 					}
 				}
 				buckets[0].ItemsList = 0;

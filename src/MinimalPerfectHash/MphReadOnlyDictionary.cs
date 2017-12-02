@@ -22,21 +22,45 @@ namespace MinimalPerfectHash
 			Func<TKey, Byte[]> getKeyBytes,
 			Double loadFactor = DefaultLoadFactor)
 		{
+			if (dictionary == null)
+				throw new ArgumentNullException(nameof(dictionary));
 			this.comparer = comparer ?? throw new ArgumentNullException(nameof(comparer));
 			this.getKeyBytes = getKeyBytes ?? throw new ArgumentNullException(nameof(getKeyBytes));
 			if (loadFactor < 0.5)
 				loadFactor = 0.5;
 			if (loadFactor >= 0.99)
 				loadFactor = 0.99;
-			var keyGenerator = new KeyGenerator(dictionary ?? throw new ArgumentNullException(nameof(dictionary)), getKeyBytes);
-			Count = checked ((Int32) keyGenerator.KeyCount);
-			hashFunction = new MphFunction(keyGenerator, loadFactor);
+			var dict = GetDictionaryWithCount(dictionary, out var count);
+			hashFunction = new MphFunction<TKey>(
+				dict.Select(x => x.Key),
+				count,
+				getKeyBytes,
+				loadFactor);
 			table = new (Byte, KeyValuePair<TKey, TValue>)[hashFunction.N];
-			foreach (var kvp in keyGenerator.Dictionary)
+			foreach (var kvp in dict)
 			{
 				var bytes = getKeyBytes(kvp.Key);
 				var hash = hashFunction.GetHash(bytes);
 				table[hash] = (1, kvp);
+			}
+		}
+
+		private static IEnumerable<KeyValuePair<TKey, TValue>> GetDictionaryWithCount(
+			IEnumerable<KeyValuePair<TKey, TValue>> dictionary,
+			out Int32 count)
+		{
+			switch (dictionary)
+			{
+				case ICollection<KeyValuePair<TKey, TValue>> icollection:
+					count = icollection.Count;
+					return icollection;
+				case IReadOnlyCollection<KeyValuePair<TKey, TValue>> ireadOnlyCollection:
+					count = ireadOnlyCollection.Count;
+					return ireadOnlyCollection;
+				default:
+					var list = dictionary.ToList();
+					count = list.Count;
+					return list;
 			}
 		}
 
@@ -89,47 +113,5 @@ namespace MinimalPerfectHash
 		}
 
 		public TValue this[TKey key] => TryGetValue(key, out var value) ? value : throw new KeyNotFoundException();
-
-		private class KeyGenerator : IKeySource
-		{
-			internal readonly IEnumerable<KeyValuePair<TKey, TValue>> Dictionary;
-			private IEnumerator<KeyValuePair<TKey, TValue>> enumerator;
-			private readonly Func<TKey, Byte[]> getKeyBytes;
-
-			public KeyGenerator(IEnumerable<KeyValuePair<TKey, TValue>> dictionary, Func<TKey, Byte[]> getKeyBytes)
-			{
-				switch (dictionary) {
-					case ICollection<KeyValuePair<TKey, TValue>> icollection:
-						KeyCount = (UInt32) icollection.Count;
-						this.Dictionary = dictionary;
-						break;
-					case IReadOnlyCollection<KeyValuePair<TKey, TValue>> ireadOnlyCollection:
-						KeyCount = (UInt32) ireadOnlyCollection.Count;
-						this.Dictionary = dictionary;
-						break;
-					default:
-						var list = dictionary.ToList();
-						this.Dictionary = list;
-						KeyCount = (UInt32) list.Count;
-						break;
-				}
-				this.enumerator = this.Dictionary.GetEnumerator();
-				this.getKeyBytes = getKeyBytes;
-			}
-
-			public UInt32 KeyCount { get; }
-
-			public Byte[] Read()
-			{
-				if (!enumerator.MoveNext())
-					throw new InvalidOperationException();
-				return getKeyBytes(enumerator.Current.Key);
-			}
-
-			public void Rewind()
-			{
-				enumerator = Dictionary.GetEnumerator(); // some enumerators might not have `Reset()` implemented
-			}
-		}
 	}
 }

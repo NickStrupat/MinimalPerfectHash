@@ -16,13 +16,36 @@
  * ........................................................................ */
 
 using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace MinimalPerfectHash
 {
-    /// <summary>
-    /// Minimum Perfect Hash function class
-    /// </summary>
-    [Serializable]
+	[Serializable]
+	public sealed class MphFunction<T> : MphFunction
+	{
+		/// <summary>
+		/// Create a minimum perfect hash function for the provided key set
+		/// </summary>
+		/// <param name="loadFactor">Load factor (.5 &gt; c &gt; .99)</param>
+		public MphFunction(IList<T> ilist, Func<T, Byte[]> getKeyBytesFunc, Double loadFactor)
+		: base(ilist.Select(getKeyBytesFunc), (UInt32) ilist.Count, loadFactor) {}
+
+		/// <summary>
+		/// Create a minimum perfect hash function for the provided key set
+		/// </summary>
+		/// <param name="loadFactor">Load factor (.5 &gt; c &gt; .99)</param>
+		public MphFunction(IEnumerable<T> ienumerable, Int32 count, Func<T, Byte[]> getKeyFunc, Double loadFactor)
+			: base(ienumerable.Select(getKeyFunc), (UInt32) count, loadFactor) {}
+
+
+		public UInt32 GetHash(T key, Func<T, Byte[]> getKeyBytesFunc) => GetHash(getKeyBytesFunc(key));
+	}
+
+	/// <summary>
+	/// Minimum Perfect Hash function class
+	/// </summary>
+	[Serializable]
     public class MphFunction
     {
         private readonly CompressedSeq cs;
@@ -38,11 +61,17 @@ namespace MinimalPerfectHash
 		/// <summary>
 		/// Create a minimum perfect hash function for the provided key set
 		/// </summary>
+		/// <param name="loadFactor">Load factor (.5 &gt; c &gt; .99)</param>
+		public MphFunction(IList<Byte[]> keys, Double loadFactor) : this(keys, (UInt32) keys.Count, loadFactor) {}
+
+		/// <summary>
+		/// Create a minimum perfect hash function for the provided key set
+		/// </summary>
 		/// <param name="keySource">Key source</param>
 		/// <param name="loadFactor">Load factor (.5 &gt; c &gt; .99)</param>
-		public MphFunction(IKeySource keySource, Double loadFactor)
+		protected MphFunction(IEnumerable<Byte[]> keySource, UInt32 keyCount, Double loadFactor)
 		{
-			var buckets = new Buckets(keySource, loadFactor);
+			var buckets = new Buckets(keySource, keyCount, loadFactor);
 			var dispTable = new UInt32[buckets.NBuckets];
 
 			var iteration = 100;
@@ -89,7 +118,6 @@ namespace MinimalPerfectHash
             var probe1Num = disp / n;
             var position = (UInt32)((f + ((UInt64)h) * probe0Num + probe1Num) % n);
             return position;
-        }
-    }
-
+		}
+	}
 }
