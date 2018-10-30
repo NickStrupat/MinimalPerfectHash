@@ -24,6 +24,8 @@ namespace MinimalPerfectHash
 	[Serializable]
 	public sealed class MphFunction<T> : MphFunction
 	{
+		private MphFunction() {}
+
 		/// <summary>
 		/// Create a minimum perfect hash function for the provided key set
 		/// </summary>
@@ -57,6 +59,8 @@ namespace MinimalPerfectHash
 	    /// Maximun value of the hash function.
 	    /// </summary>
 	    public UInt32 MaxValue => maxValue;
+
+		private protected MphFunction() {}
 
 		/// <summary>
 		/// Create a minimum perfect hash function for the provided key set

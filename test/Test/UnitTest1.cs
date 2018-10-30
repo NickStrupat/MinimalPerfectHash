@@ -2,10 +2,14 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
 using MinimalPerfectHash;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using Newtonsoft.Json.Serialization;
 using Xunit;
 
 namespace Test
@@ -87,7 +91,7 @@ namespace Test
 	    [Fact]
 	    public void HashFunctionSerialization()
 		{
-			const Int32 keyCount = 2_000;
+			const Int32 keyCount = 20_000;
 			var hashFunction = new MphFunction<Int32>(Enumerable.Range(0, keyCount), keyCount, GetKeyBytes, 1);
 			var table = new String[hashFunction.MaxValue];
 			for (var i = 0; i < keyCount; i++)
@@ -96,18 +100,98 @@ namespace Test
 				var hash = hashFunction.GetHash(Encoding.UTF8.GetBytes(key));
 				table[hash] = key;
 			}
-			IFormatter formatter = new BinaryFormatter();
-			using (var ms = new MemoryStream(1_000))
+
+			var settings = new JsonSerializerSettings() { ContractResolver = NonPublicFieldContractResolver.Instance, ConstructorHandling = ConstructorHandling.AllowNonPublicDefaultConstructor };
+			var json = JsonConvert.SerializeObject(hashFunction, settings);
+			var hashFunction2 = JsonConvert.DeserializeObject<MphFunction>(json, settings);
+			for (var i = 0; i < keyCount; i++)
 			{
-				formatter.Serialize(ms, hashFunction);
-				ms.Position = 0;
-				var hashFunction2 = (MphFunction) formatter.Deserialize(ms);
-				for (var i = 0; i < keyCount; i++)
+				var key = $"KEY-{i}";
+				var hash = hashFunction2.GetHash(Encoding.UTF8.GetBytes(key));
+				Assert.Equal(key, table[hash]);
+			}
+		}
+
+		[Fact]
+		public void MphReadOnlyDictionarySerialization()
+		{
+			const Int32 keyCount = 20_000;
+			var enumerable = Enumerable.Range(0, keyCount).Select(x => new KeyValuePair<Int32, String>(x, $"KEY-{x}"));
+			var dictionary = new MphReadOnlyDictionary<Int32, String>(enumerable, GetKeyBytes);
+			
+			var settings = new JsonSerializerSettings() { ContractResolver = NonPublicFieldContractResolver.Instance, ConstructorHandling = ConstructorHandling.AllowNonPublicDefaultConstructor };
+			var json = JsonConvert.SerializeObject(dictionary, MphReadOnlyDictionaryConverter<Int32, String>.Instance);
+			var dictionary2 = JsonConvert.DeserializeObject<MphReadOnlyDictionary<Int32, String>>(json, MphReadOnlyDictionaryConverter<Int32, String>.Instance);
+			for (var i = 0; i < keyCount; i++)
+				Assert.Equal(dictionary[i], dictionary2[i]);
+		}
+
+		public class MphReadOnlyDictionaryConverter<TKey, TValue> : JsonConverter<MphReadOnlyDictionary<TKey, TValue>>
+		{
+			public static MphReadOnlyDictionaryConverter<TKey, TValue> Instance { get; } = new MphReadOnlyDictionaryConverter<TKey, TValue>();
+
+			private MphReadOnlyDictionaryConverter() {}
+
+			public override void WriteJson(JsonWriter writer, MphReadOnlyDictionary<TKey, TValue> value, JsonSerializer serializer)
+			{
+				var jsonSerializer = new JsonSerializer() { ContractResolver = NonPublicFieldContractResolver.Instance, ConstructorHandling = ConstructorHandling.AllowNonPublicDefaultConstructor };
+				var table = JToken.FromObject(value);
+				var mphFunction = JToken.FromObject(value.MphFunction, jsonSerializer);
+
+				writer.WriteStartObject();
 				{
-					var key = $"KEY-{i}";
-					var hash = hashFunction2.GetHash(Encoding.UTF8.GetBytes(key));
-					Assert.Equal(key, table[hash]);
+					writer.WritePropertyName(value.GetType().Name);
+					writer.WriteStartObject();
+					{
+						writer.WritePropertyName("Table");
+						table.WriteTo(writer);
+						writer.WritePropertyName("MphFunction");
+						mphFunction.WriteTo(writer);
+					}
+					writer.WriteEndObject();
 				}
+				writer.WriteEndObject();
+			}
+
+			public override MphReadOnlyDictionary<TKey, TValue> ReadJson(JsonReader reader, Type objectType, MphReadOnlyDictionary<TKey, TValue> existingValue, Boolean hasExistingValue, JsonSerializer serializer)
+			{
+				return null;
+			}
+		}
+
+		public class NonPublicFieldContractResolver : DefaultContractResolver
+		{
+			public static NonPublicFieldContractResolver Instance { get; } = new NonPublicFieldContractResolver();
+
+			private NonPublicFieldContractResolver()
+			{
+				IgnoreSerializableAttribute = true;
+				IgnoreSerializableInterface = true;
+			}
+
+			protected override IList<JsonProperty> CreateProperties(Type type, MemberSerialization memberSerialization)
+			{
+				var types = GetInheritanceChain(type);
+				const BindingFlags BindingAttr = BindingFlags.NonPublic | BindingFlags.Instance;
+				var fieldInfos = types.SelectMany(x => x.GetFields(BindingAttr));
+				return fieldInfos.Select(x => Selector(x, memberSerialization)).ToList();
+			}
+
+			private static IEnumerable<Type> GetInheritanceChain(Type type, Type terminator = null)
+			{
+				if (terminator?.IsAssignableFrom(type) == false)
+					throw new ArgumentOutOfRangeException(nameof(terminator), "Terminator type must be in the inheritance chain");
+				do
+					yield return type;
+				while ((type = type.BaseType) != terminator);
+			}
+
+			private JsonProperty Selector(MemberInfo p, MemberSerialization memberSerialization)
+			{
+				var jsonProperty = base.CreateProperty(p, memberSerialization);
+				jsonProperty.Writable = true;
+				jsonProperty.Readable = true;
+				return jsonProperty;
 			}
 		}
 	}

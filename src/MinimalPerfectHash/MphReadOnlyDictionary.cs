@@ -7,13 +7,15 @@ namespace MinimalPerfectHash
 {
 	public sealed class MphReadOnlyDictionary<TKey, TValue> : IReadOnlyDictionary<TKey, TValue>
 	{
-		private readonly (Byte flag, KeyValuePair<TKey, TValue> kvp)[] table;
+		public (Byte flag, KeyValuePair<TKey, TValue> kvp)[] Table { get; }
+		public MphFunction MphFunction { get; }
 		private readonly Func<TKey, Byte[]> getKeyBytes;
 		private readonly IEqualityComparer<TKey> comparer;
-		private readonly MphFunction hashFunction;
 
 		public Int32 Count { get; }
 		private const Double DefaultLoadFactor = 0.99d;
+
+		private MphReadOnlyDictionary() {}
 
 		/// <param name="loadFactor">0.5 &lt; loadFactor &gt; 0.99</param>
 		public MphReadOnlyDictionary(
@@ -31,17 +33,17 @@ namespace MinimalPerfectHash
 			if (loadFactor >= 0.99)
 				loadFactor = 0.99;
 			var dict = GetDictionaryWithCount(dictionary, out var count);
-			hashFunction = new MphFunction<TKey>(
+			MphFunction = new MphFunction<TKey>(
 				dict.Select(x => x.Key),
 				count,
 				getKeyBytes,
 				loadFactor);
-			table = new (Byte, KeyValuePair<TKey, TValue>)[hashFunction.MaxValue];
+			Table = new (Byte, KeyValuePair<TKey, TValue>)[MphFunction.MaxValue];
 			foreach (var kvp in dict)
 			{
 				var bytes = getKeyBytes(kvp.Key);
-				var hash = hashFunction.GetHash(bytes);
-				table[hash] = (1, kvp);
+				var hash = MphFunction.GetHash(bytes);
+				Table[hash] = (1, kvp);
 			}
 		}
 
@@ -82,9 +84,9 @@ namespace MinimalPerfectHash
 
 		private IEnumerable<KeyValuePair<TKey, TValue>> GetEnumerable()
 		{
-			for (var i = 0; i < table.Length; i++)
-				if (table[i].flag == 1)
-					yield return table[i].kvp;
+			for (var i = 0; i < Table.Length; i++)
+				if (Table[i].flag == 1)
+					yield return Table[i].kvp;
 		}
 
 		public IEnumerable<TKey> Keys => GetEnumerable().Select(x => x.Key);
@@ -98,10 +100,10 @@ namespace MinimalPerfectHash
 		public Boolean TryGetValue(TKey key, out TValue value)
 		{
 			var bytes = getKeyBytes(key);
-			var hash = hashFunction.GetHash(bytes);
-			if (hash < table.Length)
+			var hash = MphFunction.GetHash(bytes);
+			if (hash < Table.Length)
 			{
-				var entry = table[hash];
+				var entry = Table[hash];
 				if (comparer.Equals(entry.kvp.Key, key))
 				{
 					value = entry.kvp.Value;
