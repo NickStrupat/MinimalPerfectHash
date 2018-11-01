@@ -33,10 +33,10 @@ namespace MinimalPerfectHash
 			if (loadFactor >= 0.99)
 				loadFactor = 0.99;
 			var dict = GetDictionaryWithCount(dictionary, out var count);
-			MphFunction = new MphFunction<TKey>(
-				dict.Select(x => x.Key),
-				count,
-				getKeyBytes,
+			Count = count;
+			MphFunction = new MphFunction(
+				dict.Select(x => x.Key).Select(getKeyBytes),
+				(UInt32) count,
 				loadFactor);
 			Table = new (Byte, KeyValuePair<TKey, TValue>)[MphFunction.MaxValue];
 			foreach (var kvp in dict)
