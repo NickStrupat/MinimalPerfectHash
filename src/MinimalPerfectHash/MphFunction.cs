@@ -95,7 +95,7 @@ namespace MinimalPerfectHash
         /// </summary>
         /// <param name="key">key from the original key set</param>
         /// <returns>Hash value (0 &gt; hash &gt; N)</returns>
-        public UInt32 GetHash(Byte[] key)
+        public UInt32 GetHash(ReadOnlySpan<Byte> key)
         {
 			Span<UInt32> hl = stackalloc UInt32[3];
             JenkinsHash.HashVector(hashSeed, key, hl);

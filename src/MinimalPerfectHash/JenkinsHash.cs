@@ -44,7 +44,7 @@ namespace MinimalPerfectHash
         /// <param name="seed">Hash vector hash</param>
         /// <param name="k">Key to hash</param>
         /// <param name="hashes">Vector of 3 uints to set to the hash value</param>
-        public static void HashVector(UInt32 seed, Byte[] k, Span<UInt32> hashes)
+        public static void HashVector(UInt32 seed, ReadOnlySpan<Byte> k, Span<UInt32> hashes)
         {
             var p = 0;
             var length = (UInt32)k.Length;
