@@ -37,6 +37,11 @@ namespace MinimalPerfectHash
 	    /// </summary>
 	    public UInt32 MaxValue => maxValue;
 
+		/// <summary>
+		/// The deep size of the entire object in bytes.
+		/// </summary>
+		public Int32 Size => (sizeof(UInt32) * 3) + cs.Size;
+
 		private MphFunction(CompressedSeq cs, UInt32 hashSeed, UInt32 maxValue, UInt32 nBuckets)
 		{
 			this.cs = cs;
@@ -112,20 +117,31 @@ namespace MinimalPerfectHash
 
 		public Byte[] Dump()
 		{
-			var size = (sizeof(UInt32) * 3) + cs.Size;
-			var bytes = new Byte[size];
-			var span = MemoryMarshal.Cast<Byte, UInt32>(new Span<Byte>(bytes));
+            var bytes = new Byte[Size];
+			DumpInternal(bytes);
+			return bytes;
+		}
+
+		public void Dump(Span<Byte> bytes)
+		{
+			if (bytes.Length < Size)
+				throw new ArgumentException("Span is shorter than the size of this funciton. See `Size` property.", nameof(bytes));
+			DumpInternal(bytes);
+		}
+
+		private void DumpInternal(Span<Byte> bytes)
+		{
+			var span = MemoryMarshal.Cast<Byte, UInt32>(bytes);
 			var i = 0;
 			span[i++] = hashSeed;
 			span[i++] = maxValue;
 			span[i++] = nBuckets;
 			cs.Dump(span.Slice(i));
-			return bytes;
 		}
 
-		public static MphFunction Load(Byte[] bytes)
+		public static MphFunction Load(ReadOnlySpan<Byte> bytes)
 		{
-			var span = MemoryMarshal.Cast<Byte, UInt32>(new ReadOnlySpan<Byte>(bytes));
+			var span = MemoryMarshal.Cast<Byte, UInt32>(bytes);
 			var i = 0;
 			UInt32 hashSeed = span[i++];
 			UInt32 maxValue = span[i++];
