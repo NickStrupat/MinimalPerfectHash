@@ -124,7 +124,7 @@ namespace MinimalPerfectHash
 
 		public Boolean MappingPhase(out UInt32 hashSeed, out UInt32 maxBucketSize)
 		{
-			var hl = new UInt32[3];
+			Span<UInt32> hl = stackalloc UInt32[3];
 			var mapItems = new MapItem[keyCount];
 			UInt32 mappingIterations = 1000;
 			var rdm = new Random(111);
