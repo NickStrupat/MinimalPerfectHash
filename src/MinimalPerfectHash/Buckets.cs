@@ -16,6 +16,7 @@
  * ........................................................................ */
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 
 namespace MinimalPerfectHash
@@ -256,19 +257,19 @@ namespace MinimalPerfectHash
 		Boolean PlaceBucketProbe(UInt32 probe0Num, UInt32 probe1Num, UInt32 bucketNum, UInt32 size, BitArray occupTable)
 		{
 			UInt32 i;
-			UInt32 position;
+			Int32 position;
 
 			var p = buckets[bucketNum].ItemsList;
 
 			// try place bucket with probe_num
 			for (i = 0; i < size; i++) // placement
 			{
-				position = (UInt32)((items[p].F + ((UInt64)items[p].H) * probe0Num + probe1Num) % BinCount);
-				if (occupTable.GetBit(position))
+				position = (Int32)((items[p].F + ((UInt64)items[p].H) * probe0Num + probe1Num) % BinCount);
+				if (occupTable.Get(position))
 				{
 					break;
 				}
-				occupTable.SetBit(position);
+				occupTable.Set(position, true);
 				p++;
 			}
 			if (i != size) // Undo the placement
@@ -280,8 +281,8 @@ namespace MinimalPerfectHash
 					{
 						break;
 					}
-					position = (UInt32)((items[p].F + ((UInt64)items[p].H) * probe0Num + probe1Num) % BinCount);
-					occupTable.UnSetBit(position);
+					position = (Int32)((items[p].F + ((UInt64)items[p].H) * probe0Num + probe1Num) % BinCount);
+					occupTable.Set(position, false);
 
 					// 				([position/32]^=(1<<(position%32));
 					p++;
@@ -296,7 +297,7 @@ namespace MinimalPerfectHash
 		{
 			var maxProbes = (UInt32)(((Math.Log(keyCount) / Math.Log(2.0)) / 20) * MaxProbesBase);
 			UInt32 i;
-			var occupTable = new BitArray((Int32)(((BinCount + 31) / 32) * sizeof(UInt32)));
+			var occupTable = new BitArray((Int32)(((BinCount + 31) / 32) * sizeof(UInt32) * 8));
 
 			for (i = maxBucketSize; i > 0; i--)
 			{

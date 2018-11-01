@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -34,7 +35,7 @@ namespace Test
 		        ((KeyCount * 100) / (Double)hashFunction.MaxValue));
 
 	        // Check for any collision
-	        var used = new System.Collections.BitArray((Int32)hashFunction.MaxValue);
+	        var used = new BitArray((Int32)hashFunction.MaxValue);
 
 	        start = DateTime.Now;
 	        for (var test = 0U; test < KeyCount; test++)
