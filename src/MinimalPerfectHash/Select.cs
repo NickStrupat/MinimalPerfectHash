@@ -191,6 +191,44 @@ namespace MinimalPerfectHash
 		UInt32[] bitsVec;
 		UInt32[] selectTable;
 
+		internal Int32 Size => (4 + bitsVec.Length + selectTable.Length) * sizeof(UInt32);
+
+		internal void Dump(Span<UInt32> span)
+		{
+			var i = 0;
+			span[i++] = n;
+			span[i++] = m;
+
+			var bitsVecLength = (UInt32) bitsVec.Length;
+			span[i++] = bitsVecLength;
+			for (var j = 0; j != bitsVecLength; j++)
+				span[i++] = bitsVec[j];
+
+			var selectTableLength = (UInt32) selectTable.Length;
+			span[i++] = selectTableLength;
+			for (var j = 0; j != selectTableLength; j++)
+				span[i++] = selectTable[j];
+		}
+
+		internal Select(ReadOnlySpan<UInt32> span)
+		{
+			var i = 0;
+			n = span[i++];
+			m = span[i++];
+
+			var bitsVecLength = span[i++];
+			bitsVec = new UInt32[bitsVecLength];
+			for (var j = 0; j != bitsVecLength; j++)
+				bitsVec[j] = span[i++];
+
+			var selectTableLength = span[i++];
+			selectTable = new UInt32[selectTableLength];
+			for (var j = 0; j != selectTableLength; j++)
+				selectTable[j] = span[i++];
+		}
+
+		public Select() { }
+
 		public void Generate(UInt32[] keysVec, UInt32 n, UInt32 m)
 		{
 			UInt32 buffer = 0;

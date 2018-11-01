@@ -16,6 +16,7 @@
  * ........................................................................ */
 
 using System;
+using System.Collections.Generic;
 
 namespace MinimalPerfectHash
 {
@@ -29,8 +30,55 @@ namespace MinimalPerfectHash
         UInt32[] storeTable;
         UInt32 totalLength;
 
+		public CompressedSeq() { }
 
-        static UInt32 ILog2(UInt32 x)
+		internal Int32 Size => (sizeof(UInt32) * (5 + lengthRems.Length + storeTable.Length)) + sel.Size;
+
+		internal void Dump(Span<UInt32> span)
+		{
+			var i = 0;
+			var lengthRemsLength = (UInt32) lengthRems.Length;
+			span[i++] = lengthRemsLength;
+			for (var j = 0; j != lengthRemsLength; j++)
+				span[i++] = lengthRems[j];
+
+			span[i++] = n;
+			span[i++] = remR;
+
+			sel.Dump(span.Slice(i));
+			i += sel.Size / sizeof(UInt32);
+
+			var storeTableLength = (UInt32) storeTable.Length;
+			span[i++] = storeTableLength;
+			for (var j = 0; j != storeTableLength; j++)
+				span[i++] = storeTable[j];
+
+			span[i++] = totalLength;
+		}
+
+		internal CompressedSeq(ReadOnlySpan<UInt32> span)
+		{
+			var i = 0;
+			var lengthRemsLength = span[i++];
+			lengthRems = new UInt32[lengthRemsLength];
+			for (var j = 0; j != lengthRemsLength; j++)
+				lengthRems[j] = span[i++];
+
+			n = span[i++];
+			remR = span[i++];
+
+			sel = new Select(span.Slice(i));
+			i += sel.Size / sizeof(UInt32);
+
+			var storeTableLength = span[i++];
+			storeTable = new UInt32[storeTableLength];
+			for (var j = 0; j != storeTableLength; j++)
+				storeTable[j] = span[i++];
+
+			totalLength = span[i++];
+		}
+
+		static UInt32 ILog2(UInt32 x)
         {
             UInt32 res = 0;
 

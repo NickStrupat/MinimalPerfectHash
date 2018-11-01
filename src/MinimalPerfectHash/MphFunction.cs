@@ -17,33 +17,10 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
+using System.Runtime.InteropServices;
 
 namespace MinimalPerfectHash
 {
-	[Serializable]
-	public sealed class MphFunction<T> : MphFunction
-	{
-		private MphFunction() {}
-
-		/// <summary>
-		/// Create a minimum perfect hash function for the provided key set
-		/// </summary>
-		/// <param name="loadFactor">Load factor (.5 &gt; c &gt; .99)</param>
-		public MphFunction(IList<T> ilist, Func<T, Byte[]> getKeyBytesFunc, Double loadFactor)
-		: base(ilist.Select(getKeyBytesFunc), (UInt32) ilist.Count, loadFactor) {}
-
-		/// <summary>
-		/// Create a minimum perfect hash function for the provided key set
-		/// </summary>
-		/// <param name="loadFactor">Load factor (.5 &gt; c &gt; .99)</param>
-		public MphFunction(IEnumerable<T> ienumerable, Int32 count, Func<T, Byte[]> getKeyFunc, Double loadFactor)
-			: base(ienumerable.Select(getKeyFunc), (UInt32) count, loadFactor) {}
-
-
-		public UInt32 GetHash(T key, Func<T, Byte[]> getKeyBytesFunc) => GetHash(getKeyBytesFunc(key));
-	}
-
 	/// <summary>
 	/// Minimum Perfect Hash function class
 	/// </summary>
@@ -60,7 +37,15 @@ namespace MinimalPerfectHash
 	    /// </summary>
 	    public UInt32 MaxValue => maxValue;
 
-		private protected MphFunction() {}
+		private MphFunction(CompressedSeq cs, UInt32 hashSeed, UInt32 maxValue, UInt32 nBuckets)
+		{
+			this.cs = cs;
+			this.hashSeed = hashSeed;
+			this.maxValue = maxValue;
+			this.nBuckets = nBuckets;
+		}
+
+		private protected MphFunction() { }
 
 		/// <summary>
 		/// Create a minimum perfect hash function for the provided key set
@@ -72,8 +57,9 @@ namespace MinimalPerfectHash
 		/// Create a minimum perfect hash function for the provided key set
 		/// </summary>
 		/// <param name="keySource">Key source</param>
+		/// <param name="keyCount">Key count</param>
 		/// <param name="loadFactor">Load factor (.5 &gt; c &gt; .99)</param>
-		protected MphFunction(IEnumerable<Byte[]> keySource, UInt32 keyCount, Double loadFactor)
+		public MphFunction(IEnumerable<Byte[]> keySource, UInt32 keyCount, Double loadFactor)
 		{
 			var buckets = new Buckets(keySource, keyCount, loadFactor);
 			var dispTable = new UInt32[buckets.BucketCount];
@@ -111,7 +97,7 @@ namespace MinimalPerfectHash
         /// <returns>Hash value (0 &gt; hash &gt; N)</returns>
         public UInt32 GetHash(Byte[] key)
         {
-            var hl = new UInt32[3];
+			Span<UInt32> hl = stackalloc UInt32[3];
             JenkinsHash.HashVector(hashSeed, key, hl);
             var g = hl[0] % nBuckets;
             var f = hl[1] % maxValue;
@@ -122,6 +108,30 @@ namespace MinimalPerfectHash
             var probe1Num = disp / maxValue;
             var position = (UInt32)((f + ((UInt64)h) * probe0Num + probe1Num) % maxValue);
             return position;
+		}
+
+		public Byte[] Dump()
+		{
+			var size = (sizeof(UInt32) * 3) + cs.Size;
+			var bytes = new Byte[size];
+			var span = MemoryMarshal.Cast<Byte, UInt32>(new Span<Byte>(bytes));
+			var i = 0;
+			span[i++] = hashSeed;
+			span[i++] = maxValue;
+			span[i++] = nBuckets;
+			cs.Dump(span.Slice(i));
+			return bytes;
+		}
+
+		public static MphFunction Load(Byte[] bytes)
+		{
+			var span = MemoryMarshal.Cast<Byte, UInt32>(new ReadOnlySpan<Byte>(bytes));
+			var i = 0;
+			UInt32 hashSeed = span[i++];
+			UInt32 maxValue = span[i++];
+			UInt32 nBuckets = span[i++];
+			CompressedSeq cs = new CompressedSeq(span.Slice(i));
+			return new MphFunction(cs, hashSeed, maxValue, nBuckets);
 		}
 	}
 }

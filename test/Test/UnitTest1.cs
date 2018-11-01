@@ -1,10 +1,7 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Runtime.Serialization;
-using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
 using MinimalPerfectHash;
 using Newtonsoft.Json;
@@ -27,7 +24,7 @@ namespace Test
 	        // Derivate a minimum perfect hash function
 	        Console.WriteLine("Generating minimum perfect hash function for {0} keys", KeyCount);
 	        var start = DateTime.Now;
-	        var hashFunction = new MphFunction<Int32>(Enumerable.Range(0, KeyCount), KeyCount, GetKeyBytes, loadFactor);
+	        var hashFunction = new MphFunction(Enumerable.Range(0, KeyCount).Select(GetKeyBytes), KeyCount, loadFactor);
 
 	        Console.WriteLine("Completed in {0:0.000000} s", DateTime.Now.Subtract(start).TotalMilliseconds / 1000.0);
 
@@ -42,7 +39,7 @@ namespace Test
 	        start = DateTime.Now;
 	        for (var test = 0U; test < KeyCount; test++)
 	        {
-		        var hash = (Int32)hashFunction.GetHash((Int32) test, GetKeyBytes);
+		        var hash = (Int32)hashFunction.GetHash(GetKeyBytes((Int32) test));
 		        if (used[hash])
 		        {
 					Assert.True(false, $"FAILED - Collision detected at {test}");
@@ -92,7 +89,7 @@ namespace Test
 	    public void HashFunctionSerialization()
 		{
 			const Int32 keyCount = 20_000;
-			var hashFunction = new MphFunction<Int32>(Enumerable.Range(0, keyCount), keyCount, GetKeyBytes, 1);
+			var hashFunction = new MphFunction(Enumerable.Range(0, keyCount).Select(GetKeyBytes), keyCount, 1);
 			var table = new String[hashFunction.MaxValue];
 			for (var i = 0; i < keyCount; i++)
 			{
@@ -101,9 +98,12 @@ namespace Test
 				table[hash] = key;
 			}
 
+			var bytes = hashFunction.Dump();
+			var hashFunction2 = MphFunction.Load(bytes);
+
 			var settings = new JsonSerializerSettings() { ContractResolver = NonPublicFieldContractResolver.Instance, ConstructorHandling = ConstructorHandling.AllowNonPublicDefaultConstructor };
 			var json = JsonConvert.SerializeObject(hashFunction, settings);
-			var hashFunction2 = JsonConvert.DeserializeObject<MphFunction>(json, settings);
+			//var hashFunction2 = JsonConvert.DeserializeObject<MphFunction>(json, settings);
 			for (var i = 0; i < keyCount; i++)
 			{
 				var key = $"KEY-{i}";
